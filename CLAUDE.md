@@ -14,7 +14,7 @@ Skills live under a **category directory**: `skills/<category>/<name>/SKILL.md`.
 
 - `skills/engineering/` — the idea-to-merge build pipeline (`ideate`, `create-prd`, `slice-prd`, `review-pr`)
 - `skills/utility/` — standalone tools (`ast-grep`)
-- `skills/productivity/` — routines that speed a human/agent (`write-a-skill`)
+- `skills/productivity/` — routines that speed a human/agent (`write-a-skill`, `knowledge-base` — the latter bootstraps the `ORG_KB` the pipeline assumes)
 - `skills/communication/`, `skills/domain/` — reserved for style-mode and domain-knowledge skills (see `write-a-skill` Step 3 for the placement → directory map)
 
 **Authoring context matters.** The category layout above is for *this* repo. When `write-a-skill` runs inside a **live target project** (skills installed there via `npx skills`), it instead writes the skill flat under that runner's convention (`.agents/skills/<name>/` or the harness skills dir) and symlinks into harness-specific locations — not the category layout.

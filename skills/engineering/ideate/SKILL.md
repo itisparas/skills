@@ -75,7 +75,7 @@ Classify into exactly one category — reachable **during** the interview, not o
 | **feature-valid** | Design proposal sound and feasible | Apply `area:*`/`topic:*`; assign built-in **Feature** type. Proceed to Step 5. |
 | **duplicate** | An existing issue/brief already covers this | Link the duplicate, close with a marker comment. Skip Steps 5–6. |
 | **user-error** | Behaviour is expected, or a misconfiguration | Comment explanation + guidance, then close. Skip Steps 5–6. |
-| **need-triage** | Appears valid but needs deeper analysis | Apply `need-triage`, stop; leave for triage. Skip Steps 5–6. |
+| **needs-triage** | Appears valid but needs deeper analysis before it can be a brief | Apply `state:human-review-needed` and leave the issue **untyped** (no `type:brief`) with a marker comment; a human triages it. Skip Steps 5–6. |
 
 Only **bug-confirmed** and **feature-valid** continue to routing and brief creation.
 
@@ -111,4 +111,4 @@ Post or update the brief in the Step 5 destination, beginning with the marker.
 
 ## Step 7: Stop at the human gate
 
-Report: the classification, the disposition (new brief / appended / closed as duplicate / user-error / labelled `need-triage`), and a link. **Never apply `state:agent-ready`** — end by stating that a human must review and gate the brief before anything is built.
+Report: the classification, the disposition (new brief / appended / closed as duplicate / user-error / parked for triage with `state:human-review-needed`), and a link. **Never apply `state:agent-ready`** — end by stating that a human must review and gate the brief before anything is built.
