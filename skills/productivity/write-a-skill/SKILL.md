@@ -52,15 +52,17 @@ Search the inventory and docs (skill descriptions, briefs in Notion / `$ORG_KB`)
 
 Settle **where this skill sits** before interviewing on details — it decides the name, triggers, hand-offs, and inherited conventions. Ask directly, recommending the placement you think fits and why:
 
-| Placement | What it means | Inherits |
-| --- | --- | --- |
-| **Independent / utility** | Standalone capability, no pipeline ties (formatter, lookup) | `Running lean`, dual register |
-| **Engineering / build workflow** | A stage in the build pipeline (`ideate` → … → `review-pr`) | Pipeline handoffs, agent marker, human-gate awareness |
-| **Productivity** | Speeds a human/agent routine (triage, summaries, scaffolding) | Org-KB awareness, lean batch handling |
-| **Communication / style mode** | Changes *how* the agent talks, not what it does (like `caveman`) | Persistence rules, auto-clarity exceptions |
-| **Domain / knowledge** | Encodes org-specific subject expertise from `ORG_KB` | Glossary alignment, references one level deep |
+| Placement | Directory (this repo) | What it means | Inherits |
+| --- | --- | --- | --- |
+| **Independent / utility** | `skills/utility/` | Standalone capability, no pipeline ties (formatter, lookup) | `Running lean`, dual register |
+| **Engineering / build workflow** | `skills/engineering/` | A stage in the build pipeline (`ideate` → … → `review-pr`) | Pipeline handoffs, agent marker, human-gate awareness |
+| **Productivity** | `skills/productivity/` | Speeds a human/agent routine (triage, summaries, scaffolding) | Org-KB awareness, lean batch handling |
+| **Communication / style mode** | `skills/communication/` | Changes *how* the agent talks, not what it does (like `caveman`) | Persistence rules, auto-clarity exceptions |
+| **Domain / knowledge** | `skills/domain/` | Encodes org-specific subject expertise from `ORG_KB` | Glossary alignment, references one level deep |
 
-If it spans two, pick the primary and note the secondary in the triggers. Don't move on until placement is agreed.
+The placement decides the **category directory**. If it spans two, pick the primary and note the secondary in the triggers. Don't move on until placement is agreed.
+
+The directory above applies when authoring **in this skills repo**. When you run inside a **live target project** (skills already installed there via `npx skills`), follow that project's runner convention instead — write the skill flat under `.agents/skills/<name>/` (or the harness's skills dir) and symlink into the harness-specific locations, rather than the category layout.
 
 ## Step 4: Interview the user (ideate-style)
 
@@ -78,7 +80,7 @@ Cover by the end (one question at a time, not as a list): **Trigger** (exact phr
 Create the directory and write `SKILL.md` from the template, satisfying every contract point. Add `REFERENCE.md`/`EXAMPLES.md`/`scripts/` only when the contract calls for it.
 
 ```
-skill-name/
+skills/<category>/skill-name/      # <category> from Step 3; flat .agents/skills/skill-name/ in a live project
 ├── SKILL.md          # required
 ├── REFERENCE.md      # only if SKILL.md would exceed ~150 lines
 ├── EXAMPLES.md       # only if examples are long

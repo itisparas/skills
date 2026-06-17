@@ -6,13 +6,15 @@ The skills are designed to chain: an idea is interviewed into a brief, a human g
 
 ## Skills in this repo
 
-| Skill | Role | Output |
-| --- | --- | --- |
-| [`ideate`](skills/ideate/SKILL.md) | **Front door.** Interviews the user one question at a time in plain, non-technical language (grill-style), sharpening domain terms and updating `CONTEXT.md`/ADRs inline. Then classifies and routes the idea. | A lean `type:brief` issue (or an append / close / triage) |
-| [`create-prd`](skills/create-prd/SKILL.md) | **Spec writer.** Takes an issue number or auto-searches `type:brief` + `state:prd-ready` briefs, investigates the codebase in a sub-agent, and publishes a durable PRD as a **new** artifact in the brief's store — then retires the brief (closed/archived, cross-linked). Open questions become a marked comment + `state:human-review-needed` on the brief. Sits between `ideate` and `build-from-issue`. | A `type:prd` issue/page (problem, user stories, decisions, seams) |
-| [`review-pr`](skills/review-pr/SKILL.md) | **Gatekeeper.** Reviews a diff against a fixed point on two independent axes — **Standards** and **Spec** — using parallel sub-agents, then tags and comments the PR. | A side-by-side report + PR state label |
-| [`write-a-skill`](skills/write-a-skill/SKILL.md) | **Skill smith.** Interviews the user one question at a time (ideate-style), places the new skill among the existing ones, and drafts a `SKILL.md` against a house contract — token-lean, plainly worded, caveman-terse internally. | A new org-style `SKILL.md` (plus refs/scripts if needed) |
-| [`ast-grep`](skills/ast-grep/SKILL.md) | **Shared tool.** Structural code search with [ast-grep](https://ast-grep.github.io/). The other skills use `ast-grep` (`sg`) for **all code search** in place of `grep`. | — (referenced by the others) |
+Skills live under a category directory (`skills/<category>/<name>/`): **engineering** (the idea-to-merge build pipeline), **utility** (standalone tools), and **productivity** (routines that speed a human or agent up).
+
+| Skill | Category | Role | Output |
+| --- | --- | --- | --- |
+| [`ideate`](skills/engineering/ideate/SKILL.md) | engineering | **Front door.** Interviews the user one question at a time in plain, non-technical language (grill-style), sharpening domain terms and updating `CONTEXT.md`/ADRs inline. Then classifies and routes the idea. | A lean `type:brief` issue (or an append / close / triage) |
+| [`create-prd`](skills/engineering/create-prd/SKILL.md) | engineering | **Spec writer.** Takes an issue number or auto-searches `type:brief` + `state:prd-ready` briefs, investigates the codebase in a sub-agent, and publishes a durable PRD as a **new** artifact in the brief's store — then retires the brief (closed/archived, cross-linked). Open questions become a marked comment + `state:human-review-needed` on the brief. Sits between `ideate` and `build-from-issue`. | A `type:prd` issue/page (problem, user stories, decisions, seams) |
+| [`review-pr`](skills/engineering/review-pr/SKILL.md) | engineering | **Gatekeeper.** Reviews a diff against a fixed point on two independent axes — **Standards** and **Spec** — using parallel sub-agents, then tags and comments the PR. | A side-by-side report + PR state label |
+| [`write-a-skill`](skills/productivity/write-a-skill/SKILL.md) | productivity | **Skill smith.** Interviews the user one question at a time (ideate-style), places the new skill among the existing ones, and drafts a `SKILL.md` against a house contract — token-lean, plainly worded, caveman-terse internally. | A new org-style `SKILL.md` (plus refs/scripts if needed) |
+| [`ast-grep`](skills/utility/ast-grep/SKILL.md) | utility | **Shared tool.** Structural code search with [ast-grep](https://ast-grep.github.io/). The other skills use `ast-grep` (`sg`) for **all code search** in place of `grep`. | — (referenced by the others) |
 
 > `build-from-issue` and `security-review` are referenced by the workflow below but are **not** part of this repo — they're sibling tools in the broader pipeline.
 
@@ -81,14 +83,14 @@ npx skills add itisparas/skills -g
 
 ```bash
 # Claude Code — per project
-ln -s "$PWD/skills/ideate"        .claude/skills/ideate
-ln -s "$PWD/skills/create-prd"    .claude/skills/create-prd
-ln -s "$PWD/skills/review-pr"     .claude/skills/review-pr
-ln -s "$PWD/skills/write-a-skill" .claude/skills/write-a-skill
-ln -s "$PWD/skills/ast-grep"      .claude/skills/ast-grep
+ln -s "$PWD/skills/engineering/ideate"        .claude/skills/ideate
+ln -s "$PWD/skills/engineering/create-prd"    .claude/skills/create-prd
+ln -s "$PWD/skills/engineering/review-pr"     .claude/skills/review-pr
+ln -s "$PWD/skills/productivity/write-a-skill" .claude/skills/write-a-skill
+ln -s "$PWD/skills/utility/ast-grep"          .claude/skills/ast-grep
 
 # …or globally
-ln -s "$PWD/skills/ideate"    ~/.claude/skills/ideate
+ln -s "$PWD/skills/engineering/ideate"    ~/.claude/skills/ideate
 ```
 
 For Codex CLI and other runners, place the skill folders under that tool's skills directory (commonly `.agents/skills/`).
@@ -132,7 +134,7 @@ Every comment an agent posts begins with a marker line, so agent comments are al
 | `> **🏗️ build-from-issue-agent**` | `build-from-issue` |
 | `> **🔒 security-review-agent**` | `security-review` |
 
-When [`write-a-skill`](skills/write-a-skill/SKILL.md) authors a new skill that posts comments, it assigns that skill its own distinct marker (e.g. `> **🛠️ <skill>-agent**`) and records it here — this table stays the single source of truth, so no two skills share a marker.
+When [`write-a-skill`](skills/productivity/write-a-skill/SKILL.md) authors a new skill that posts comments, it assigns that skill its own distinct marker (e.g. `> **🛠️ <skill>-agent**`) and records it here — this table stays the single source of truth, so no two skills share a marker.
 
 ## Conventions
 
