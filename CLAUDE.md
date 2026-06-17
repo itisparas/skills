@@ -12,7 +12,7 @@ These skills target **private orgs / small projects**, not large public repos. K
 
 Skills live under a **category directory**: `skills/<category>/<name>/SKILL.md`.
 
-- `skills/engineering/` — the idea-to-merge build pipeline (`ideate`, `create-prd`, `review-pr`)
+- `skills/engineering/` — the idea-to-merge build pipeline (`ideate`, `create-prd`, `slice-prd`, `review-pr`)
 - `skills/utility/` — standalone tools (`ast-grep`)
 - `skills/productivity/` — routines that speed a human/agent (`write-a-skill`)
 - `skills/communication/`, `skills/domain/` — reserved for style-mode and domain-knowledge skills (see `write-a-skill` Step 3 for the placement → directory map)
@@ -26,10 +26,10 @@ When you move or rename a skill, update the README **Skills** table links and th
 This is the load-bearing architectural idea — read the README's **Labels**, **Comment markers**, and **Conventions** sections; they are the single source of truth.
 
 - Every branch, route, and human hand-off is decided by a **GitHub label** — never inferred from prose. A skill picks up work because an issue carries a label, advances by swapping labels, and asks for a human by applying one.
-- **Human gates are human-only labels** (`state:prd-ready`, `state:agent-ready`) that agents read but **never** apply. This is non-negotiable; it's what keeps the pipeline auditable.
+- **Human gates are human-only labels** (`state:prd-ready`, `state:slice-ready`, `state:agent-ready`) that agents read but **never** apply. This is non-negotiable; it's what keeps the pipeline auditable.
 - Every agent comment opens with a distinct **marker** line (`> **⚓️ ideate-agent**`, etc.). No two skills share a marker; the README table is the registry.
 
-Pipeline: raw idea → `ideate` (lean `type:brief`) → human applies `state:prd-ready` → `create-prd` (durable `type:prd`) → human applies `state:agent-ready` → `build-from-issue` (sibling, **not** in this repo) → PR → `review-pr`.
+Pipeline: raw idea → `ideate` (lean `type:brief`) → human applies `state:prd-ready` → `create-prd` (durable `type:prd`) → human applies `state:slice-ready` → `slice-prd` (`type:task` child issues) → human applies `state:agent-ready` → `build-from-issue` (sibling, **not** in this repo) → PR → `review-pr`.
 
 ## The house contract (how every SKILL.md is written)
 

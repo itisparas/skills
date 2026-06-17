@@ -2,7 +2,7 @@
 
 A collection of [agent skills](https://docs.anthropic.com/en/docs/claude-code/skills) for an **idea-to-merge workflow** built around an organisation knowledge base, GitHub issues/PRs, and Notion. Each skill is a self-contained `SKILL.md` (plus any bundled references) that an agent loads on demand.
 
-The skills are designed to chain: an idea is interviewed into a brief, a human gates it, it gets built, and the change is reviewed — with GitHub **labels** carrying state between each step.
+The skills are designed to chain: an idea is interviewed into a brief, specced into a PRD, sliced into buildable tasks, built, and reviewed — with a human gating each major step and GitHub **labels** carrying state between them.
 
 ## Skills in this repo
 
@@ -12,6 +12,7 @@ Skills live under a category directory (`skills/<category>/<name>/`): **engineer
 | --- | --- | --- | --- |
 | [`ideate`](skills/engineering/ideate/SKILL.md) | engineering | **Front door.** Interviews the user one question at a time in plain, non-technical language (grill-style), sharpening domain terms and updating `CONTEXT.md`/ADRs inline. Then classifies and routes the idea. | A lean `type:brief` issue (or an append / close / triage) |
 | [`create-prd`](skills/engineering/create-prd/SKILL.md) | engineering | **Spec writer.** Takes an issue number or auto-searches `type:brief` + `state:prd-ready` briefs, investigates the codebase in a sub-agent, and publishes a durable PRD as a **new** artifact in the brief's store — then retires the brief (closed/archived, cross-linked). Open questions become a marked comment + `state:human-review-needed` on the brief. Sits between `ideate` and `build-from-issue`. | A `type:prd` issue/page (problem, user stories, decisions, seams) |
+| [`slice-prd`](skills/engineering/slice-prd/SKILL.md) | engineering | **Work slicer.** Takes a `type:prd` issue number or auto-searches `type:prd` + `state:slice-ready` PRDs, investigates the codebase in a sub-agent, then interviews the user to set granularity and breaks the PRD into **tracer-bullet** child issues (each cutting through every layer). Clear slices get `state:sliced`; ambiguous ones get `state:human-review-needed`. The PRD stays open as an epic. Sits between `create-prd` and `build-from-issue`. | `type:task` child issues with Ready/Acceptance/Done checklists, linked to the PRD + brief |
 | [`review-pr`](skills/engineering/review-pr/SKILL.md) | engineering | **Gatekeeper.** Reviews a diff against a fixed point on two independent axes — **Standards** and **Spec** — using parallel sub-agents, then tags and comments the PR. | A side-by-side report + PR state label |
 | [`write-a-skill`](skills/productivity/write-a-skill/SKILL.md) | productivity | **Skill smith.** Interviews the user one question at a time (ideate-style), places the new skill among the existing ones, and drafts a `SKILL.md` against a house contract — token-lean, plainly worded, caveman-terse internally. | A new org-style `SKILL.md` (plus refs/scripts if needed) |
 | [`ast-grep`](skills/utility/ast-grep/SKILL.md) | utility | **Shared tool.** Structural code search with [ast-grep](https://ast-grep.github.io/). The other skills use `ast-grep` (`sg`) for **all code search** in place of `grep`. | — (referenced by the others) |
@@ -37,7 +38,15 @@ flowchart LR
 
     seams -. open questions .-> attention[/state:human-review-needed/]
     attention -. ideate-style interview .-> briefgate
-    prd --> gate{{"Human applies<br/>state:agent-ready"}}
+    prd --> slicegate{{"Human applies<br/>state:slice-ready"}}
+    slicegate -->|gated| sliceprd
+
+    subgraph sliceprd["🔪 slice-prd"]
+        slices[Draft tracer-bullet slices] --> coarseness[Set coarseness w/ user] --> children[Publish child issues]
+    end
+
+    children --> gate{{"Human applies<br/>state:agent-ready<br/>(per child)"}}
+    children -. ambiguous slice .-> attention
     gate -->|gated| build["🏗️ build-from-issue<br/>(sibling tool)"]
     build --> pr([Pull request])
     pr --> review
@@ -53,9 +62,10 @@ flowchart LR
 
 1. **Ideate.** A raw idea enters through `ideate`. It interviews the user until there's shared understanding, classifies the idea, and — for valid bugs/features — writes a **lean brief** (`type:brief` issue). Glossary terms and ADRs are updated inline as decisions land. Duplicates and user-errors are closed (with confirmation); unclear items get `need-triage`.
 2. **Spec.** A human gates a brief for speccing with **`state:prd-ready`**. `create-prd` then picks it up — by issue number (`create prd 250`) or by auto-searching `type:brief` + `state:prd-ready` in batch — investigates the codebase in a sub-agent, and writes a **durable PRD** (`type:prd` issue) of *decisions* rather than file paths, which rot. The PRD is a **new** artifact in the brief's own store; once it's posted, the brief is **retired** — closed (GitHub) / archived (Notion) / moved to an archive folder (local KB), cross-linked both ways — so the pipeline carries exactly one live artifact. If a blocking question surfaces it never guesses: with a human present it resolves it through an **`ideate`-style interview** (one question at a time, recommending answers, updating the brief inline) that carries the brief to `state:prd-ready`; in batch with no human, it parks the brief with a marked comment + **`state:human-review-needed`** (swapping off `state:prd-ready`) for that interview to happen later. It **never** applies `state:agent-ready`.
-3. **Human gate.** A human reviews the PRD and applies **`state:agent-ready`**. This label is a deliberate human-only gate — **agents never apply it.** Nothing gets built until a person says so.
-4. **Build.** `build-from-issue` (a sibling tool) picks up gated issues and implements them.
-5. **Review.** `review-pr` reviews the resulting diff on two axes that can pass/fail independently — **Standards** (does it follow documented coding standards?) and **Spec** (does it implement what the issue/PRD/ADR asked for?) — and tags the PR with the resulting state.
+3. **Slice gate + slicing.** A human reviews the PRD and applies **`state:slice-ready`** (a human-only gate). `slice-prd` then picks it up — by number (`slice prd 250`) or by auto-searching `type:prd` + `state:slice-ready` in batch — investigates the codebase in a sub-agent, interviews the user to set granularity, and breaks the PRD into **tracer-bullet** `type:task` child issues (each a thin vertical slice through every layer, with detailed Definition of Ready / Acceptance Criteria / Definition of Done). Clear, buildable slices get **`state:sliced`**; ambiguous ones get **`state:human-review-needed`**. The PRD **stays open as the epic** until its children merge. It **never** applies `state:agent-ready`.
+4. **Human gate.** A human reviews each `state:sliced` child issue and applies **`state:agent-ready`**. This label is a deliberate human-only gate — **agents never apply it.** Nothing gets built until a person says so.
+5. **Build.** `build-from-issue` (a sibling tool) picks up gated issues and implements them.
+6. **Review.** `review-pr` reviews the resulting diff on two axes that can pass/fail independently — **Standards** (does it follow documented coding standards?) and **Spec** (does it implement what the issue/PRD/ADR asked for?) — and tags the PR with the resulting state.
 
 ## Installation
 
@@ -85,6 +95,7 @@ npx skills add itisparas/skills -g
 # Claude Code — per project
 ln -s "$PWD/skills/engineering/ideate"        .claude/skills/ideate
 ln -s "$PWD/skills/engineering/create-prd"    .claude/skills/create-prd
+ln -s "$PWD/skills/engineering/slice-prd"     .claude/skills/slice-prd
 ln -s "$PWD/skills/engineering/review-pr"     .claude/skills/review-pr
 ln -s "$PWD/skills/productivity/write-a-skill" .claude/skills/write-a-skill
 ln -s "$PWD/skills/utility/ast-grep"          .claude/skills/ast-grep
@@ -105,7 +116,23 @@ For Codex CLI and other runners, place the skill folders under that tool's skill
 
 ## Labels
 
-**Every branch, route, and hand-off in this workflow is decided by a label, and every agent comment is stamped with a marker — nothing is inferred from prose.** A skill picks up work because an issue carries a label, advances it by swapping labels, and asks for a human by applying one. Human decision points are *always* a human-only label (`state:prd-ready`, `state:agent-ready`) that agents read but never apply. This is what keeps the pipeline auditable and the human gates real: the label *is* the contract, and these two tables are its single source of truth.
+**Every branch, route, and hand-off in this workflow is decided by a label, and every agent comment is stamped with a marker — nothing is inferred from prose.** A skill picks up work because an issue carries a label, advances it by swapping labels, and asks for a human by applying one. Human decision points are *always* a human-only label (`state:prd-ready`, `state:slice-ready`, `state:agent-ready`) that agents read but never apply. This is what keeps the pipeline auditable and the human gates real: the label *is* the contract, and these tables are its single source of truth.
+
+### Label lifecycle
+
+Labels are how work moves down the pipeline. A piece of work changes *type* as it's refined (`brief` → `prd` → `task`) and pauses at a *human gate* between each stage — a `state:*` label only a person applies. Reading top to bottom is the full journey of one idea:
+
+| Stage | The live issue carries | Set by | To advance, a human applies | Picked up by |
+| --- | --- | --- | --- | --- |
+| **Idea → brief** | `type:brief` (+ `Bug`/`Feature`, `area:*`/`topic:*`) | `ideate` | `state:prd-ready` | `create-prd` |
+| **Brief → PRD** | `type:prd` (the brief is retired/closed) | `create-prd` | `state:slice-ready` | `slice-prd` |
+| **PRD → tasks** | `type:task` + `state:sliced`, one per slice (the PRD stays open as the epic) | `slice-prd` | `state:agent-ready` (per task) | `build-from-issue` |
+| **Task → PR** | the task issue, closed by its PR | `build-from-issue` | — (review is automatic) | `review-pr` |
+| **PR → merge** | `state:merge-ready` / `state:blocked` / `state:human-review-needed` | `review-pr` | merge (when `state:merge-ready`) | humans |
+
+**Detours off the happy path:** when a skill needs a person's judgement mid-stream — `create-prd` hits a blocking open question, or `slice-prd` produces an ambiguous slice — it applies **`state:human-review-needed`** (swapping off the gate label so batch mode skips it) and parks the issue until a human resolves it. `ideate` applies **`need-triage`** to a valid idea that needs deeper analysis before it can become a brief.
+
+### Label reference
 
 State flows through GitHub labels rather than through any shared database. The skills read and write these:
 
@@ -113,12 +140,15 @@ State flows through GitHub labels rather than through any shared database. The s
 | --- | --- | --- | --- |
 | `type:brief` | The issue is a brief produced by ideate | `ideate` | `ideate` (dedup), humans |
 | `state:prd-ready` | **Human gate** — a brief is approved to be specced into a PRD. Agents **never** apply this. | Human only | `create-prd` (batch search) |
-| `type:prd` | The issue is a PRD expanded from a brief | `create-prd` | `create-prd` (dedup), humans, `build-from-issue` |
+| `type:prd` | The issue is a PRD expanded from a brief | `create-prd` | `create-prd` (dedup), humans, `slice-prd` |
+| `state:slice-ready` | **Human gate** — a PRD is approved to be sliced into tasks. Agents **never** apply this. | Human only | `slice-prd` (batch search) |
+| `type:task` | The issue is a buildable child task sliced from a PRD | `slice-prd` | humans, `build-from-issue` |
+| `state:sliced` | A child task is clear and buildable, awaiting the human build gate. Not itself a build gate. | `slice-prd` | humans |
 | `state:agent-ready` | **Human gate** — approved to build. Agents **never** apply this. | Human only | `build-from-issue` |
 | `need-triage` | Valid but needs deeper analysis before a brief | `ideate` | triage flow |
 | `state:blocked` | Review found a major issue | `review-pr` | humans, `build-from-issue` |
 | `state:merge-ready` | Both review axes are clean | `review-pr` | humans |
-| `state:human-review-needed` | Findings or open questions need human judgement | `review-pr`, `create-prd` | humans |
+| `state:human-review-needed` | Findings or open questions need human judgement | `review-pr`, `create-prd`, `slice-prd` | humans |
 | `area:*` / `topic:*` | Domain / subject classification | `ideate` | humans, routing |
 
 Built-in GitHub **issue types** `Bug` and `Feature` are assigned by `ideate` based on classification.
@@ -131,6 +161,7 @@ Every comment an agent posts begins with a marker line, so agent comments are al
 | --- | --- |
 | `> **⚓️ ideate-agent**` | `ideate` |
 | `> **📐 create-prd-agent**` | `create-prd` |
+| `> **🔪 slice-prd-agent**` | `slice-prd` |
 | `> **🏗️ build-from-issue-agent**` | `build-from-issue` |
 | `> **🔒 security-review-agent**` | `security-review` |
 
