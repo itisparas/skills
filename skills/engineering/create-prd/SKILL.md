@@ -1,11 +1,11 @@
 ---
 name: create-prd
-description: Expand a gated brief into a durable PRD. Takes a specific issue number, or auto-searches the repository for open type:brief issues carrying the state:prd-ready label and processes them in batch. Investigates the codebase in a sub-agent, then writes and publishes a PRD of decisions. The step between ideate (brief) and build-from-issue (implementation). Use when a brief is ready to be specced — e.g. "create prd", "create prd 250", "write the PRD for this brief", "spec this out".
+description: Expand a gated brief into a durable PRD. Takes a specific issue number, or auto-searches the repository for open type:brief issues carrying the state:prd-ready label and processes them in batch. Investigates the codebase in a sub-agent, then writes and publishes a PRD of decisions. The step between ideate (brief) and implement-issue (implementation). Use when a brief is ready to be specced — e.g. "create prd", "create prd 250", "write the PRD for this brief", "spec this out".
 ---
 
 # Create PRD
 
-Turn a brief into a Product Requirements Document — the **second** step of the idea-to-merge flow: `ideate` writes a lean brief ("should we?"), **`create-prd` expands it into a durable spec** ("what exactly to build"), and `build-from-issue` implements it after a human gate. The brief is thin; the PRD is where the problem becomes concrete and buildable — grounded in the codebase but written to outlive any file layout.
+Turn a brief into a Product Requirements Document — the **second** step of the idea-to-merge flow: `ideate` writes a lean brief ("should we?"), **`create-prd` expands it into a durable spec** ("what exactly to build"), and `implement-issue` implements it after a human gate. The brief is thin; the PRD is where the problem becomes concrete and buildable — grounded in the codebase but written to outlive any file layout.
 
 ## Prerequisites
 
@@ -30,7 +30,7 @@ Never guess the next step from prose. **Every branch — which briefs to pick up
 
 ## Agent Comment Marker
 
-All comments and PRD bodies **must** begin with `> **📐 create-prd-agent**` — distinguishing it from humans and other skills (`⚓️ ideate-agent`, `🏗️ build-from-issue-agent`).
+All comments and PRD bodies **must** begin with `> **📐 create-prd-agent**` — distinguishing it from humans and other skills (`⚓️ ideate-agent`, `👷 implement-issue-agent`).
 
 ## Running lean
 
@@ -67,7 +67,7 @@ Spawn a **`general-purpose` sub-agent** (`Agent` tool) to map the brief onto the
 
 > "Investigate how this would be built. Identify the components/subsystems involved (read the code to confirm, don't guess from names). Map current behaviour and the seams where the change lands. Assess feasibility — **Low** (isolated, <3 files), **Medium** (multi-component, some design calls), **High** (cross-cutting, architectural). Surface risks, edge cases, and any decision needing human judgement. Note existing patterns to follow and the test patterns used here. Use `ast-grep` (`sg`), not `grep`. Return decisions and prose — **no file:line dumps**. Under 500 words."
 
-Fold what it returns into the PRD's *Implementation Decisions* and *Testing Decisions* — durable choices, not file paths (which rot; `build-from-issue` re-investigates against the gated PRD).
+Fold what it returns into the PRD's *Implementation Decisions* and *Testing Decisions* — durable choices, not file paths (which rot; `implement-issue` re-investigates against the gated PRD).
 
 ## Step 3: Resolve open questions
 
@@ -167,7 +167,7 @@ The brief is kept, not deleted — closed/archived **is** "retired", and stays c
 
 ## Step 7: Stop at the human gate
 
-Report: the PRD location (clickable link), that the brief was retired, a 2–3 sentence summary, the complexity/confidence call, and the top risk a human should weigh. **Never apply `state:agent-ready`** — state plainly that a human must review and gate the PRD before `build-from-issue` picks it up.
+Report: the PRD location (clickable link), that the brief was retired, a 2–3 sentence summary, the complexity/confidence call, and the top risk a human should weigh. **Never apply `state:agent-ready`** — state plainly that a human must review and gate the PRD before `implement-issue` picks it up.
 
 ## Relationship to other skills
 
@@ -176,9 +176,9 @@ Raw idea → ideate → brief (type:brief)
                       │  human applies state:prd-ready   ← gate in
                   create-prd  ← this skill — expands the brief into a PRD (type:prd)
                       │  human applies state:agent-ready ← gate out
-              build-from-issue → PR → review-pr
+              implement-issue → PR → review-pr
 ```
 
 - **ideate** decides *whether* and writes the lean brief.
 - **create-prd** decides *what exactly* and writes the durable PRD.
-- **build-from-issue** decides *how* and implements — only after a human gates the PRD.
+- **implement-issue** decides *how* and implements — only after a human gates the PRD.

@@ -5,7 +5,7 @@ description: Assess, classify, and route a raw human idea into a sharp, domain-c
 
 # Ideate
 
-Assess, classify, and route a raw human idea into a sharp, domain-consistent brief. This is the front door for getting anything done — distinct from `build-from-issue`, the maintainer execution tool. Invoked directly by a human or triggered when a raw idea / feature request / bug report surfaces in conversation; either way it interviews, then assesses, classifies, and routes.
+Assess, classify, and route a raw human idea into a sharp, domain-consistent brief. This is the front door for getting anything done — distinct from `implement-issue`, the maintainer execution tool. Invoked directly by a human or triggered when a raw idea / feature request / bug report surfaces in conversation; either way it interviews, then assesses, classifies, and routes.
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ claude mcp add --transport http notion https://mcp.notion.com/mcp   # then run /
 
 ## Agent Comment Marker
 
-All comments **must** begin with `> **⚓️ ideate-agent**` — distinguishing ideate from humans and other skills (`🏗️ build-from-issue-agent`, `🔒 security-review-agent`).
+All comments **must** begin with `> **⚓️ ideate-agent**` — distinguishing ideate from humans and other skills (`👷 implement-issue-agent`, `🔒 security-review-agent`).
 
 ## Running lean
 
@@ -91,7 +91,7 @@ If Step 2 surfaced a relevant brief, **append to or refine it** rather than dupl
 
 ## Step 6: Produce the brief
 
-Write a **lean** brief — just enough for a human to decide whether to gate it. Leave the implementation approach to `build-from-issue`.
+Write a **lean** brief — just enough for a human to decide whether to gate it. Leave the implementation approach to `implement-issue`.
 
 ```markdown
 > **⚓️ ideate-agent**

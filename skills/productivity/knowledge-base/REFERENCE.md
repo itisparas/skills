@@ -60,7 +60,7 @@ archive/      superseded docs, never deleted
 |---|---|
 | `type:brief` · `type:prd` · `type:task` | The artifact's stage |
 | `state:prd-ready` · `state:slice-ready` · `state:agent-ready` | **Human-only gates** agents never apply |
-| `state:sliced` · `state:blocked` · `state:merge-ready` · `state:human-review-needed` | Pipeline states set by skills (an **untyped** `state:human-review-needed` issue is `ideate`'s "needs triage" case) |
+| `state:sliced` · `state:building` · `state:review-ready` · `state:blocked` · `state:merge-ready` · `state:human-review-needed` | Pipeline states set by skills (an **untyped** `state:human-review-needed` issue is `ideate`'s "needs triage" case) |
 | `area:*` / `topic:*` | Domain / subject classification (created on demand) |
 
 It also ensures the built-in issue types `Bug` and `Feature` exist. These labels are the contract the whole skill family routes on — see the README "Labels" table, the single source of truth. The skill **creates** them here but, like every skill, never *applies* the human-only gates.

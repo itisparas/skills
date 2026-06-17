@@ -1,11 +1,11 @@
 ---
 name: slice-prd
-description: Slice a gated PRD into independently-buildable issues using tracer-bullet vertical slices. Takes a type:prd issue number, or auto-searches for type:prd issues carrying the human gate state:slice-ready and processes them in batch. Investigates the codebase in a sub-agent, interviews the user one question at a time (plain language, analogies, a live example) to set slice coarseness before creating anything, then publishes child issues each with a Definition of Ready / Acceptance Criteria / Definition of Done checklist, cross-linked to the PRD and its brief. Clear slices are flagged state:sliced for a human to gate; ambiguous ones get state:human-review-needed. The step between create-prd and build-from-issue. Use when a PRD is ready to break into work — e.g. "slice prd", "slice prd 250", "break this PRD into issues", "turn the PRD into tickets".
+description: Slice a gated PRD into independently-buildable issues using tracer-bullet vertical slices. Takes a type:prd issue number, or auto-searches for type:prd issues carrying the human gate state:slice-ready and processes them in batch. Investigates the codebase in a sub-agent, interviews the user one question at a time (plain language, analogies, a live example) to set slice coarseness before creating anything, then publishes child issues each with a Definition of Ready / Acceptance Criteria / Definition of Done checklist, cross-linked to the PRD and its brief. Clear slices are flagged state:sliced for a human to gate; ambiguous ones get state:human-review-needed. The step between create-prd and implement-issue. Use when a PRD is ready to break into work — e.g. "slice prd", "slice prd 250", "break this PRD into issues", "turn the PRD into tickets".
 ---
 
 # Slice PRD
 
-Cut a PRD into small, independently-grabbable issues — the **third** step of the idea-to-merge flow: `ideate` writes a lean brief, `create-prd` expands it into a durable PRD, and **`slice-prd` breaks that PRD into buildable tasks** that `build-from-issue` picks up one at a time after a human gate. Each slice is a **tracer bullet** — a thin path that cuts through *every* layer end-to-end, not a horizontal slab of one layer — so a finished slice is demoable on its own.
+Cut a PRD into small, independently-grabbable issues — the **third** step of the idea-to-merge flow: `ideate` writes a lean brief, `create-prd` expands it into a durable PRD, and **`slice-prd` breaks that PRD into buildable tasks** that `implement-issue` picks up one at a time after a human gate. Each slice is a **tracer bullet** — a thin path that cuts through *every* layer end-to-end, not a horizontal slab of one layer — so a finished slice is demoable on its own.
 
 ## Prerequisites
 
@@ -32,7 +32,7 @@ Never guess the next step from prose. **Every branch — which PRDs to pick up, 
 
 ## Agent Comment Marker
 
-All comments and child-issue bodies **must** begin with `> **🔪 slice-prd-agent**` — distinguishing it from humans and other skills (`⚓️ ideate-agent`, `📐 create-prd-agent`, `🏗️ build-from-issue-agent`).
+All comments and child-issue bodies **must** begin with `> **🔪 slice-prd-agent**` — distinguishing it from humans and other skills (`⚓️ ideate-agent`, `📐 create-prd-agent`, `👷 implement-issue-agent`).
 
 ## Running lean
 
@@ -140,7 +140,7 @@ In **Notion** / **local KB**, add a "Sliced into <links>" line at the top of the
 
 ## Step 7: Stop at the human gate
 
-Report: the PRD (clickable link), the child issues created with their labels, which need human input and why, and the dependency order. (If instead the PRD was parked for async sign-off at Step 4, report that no issues were created and the breakdown awaits a reply on the PRD.) **Never apply `state:agent-ready`** — state plainly that a human must review each `state:sliced` issue and gate it before `build-from-issue` picks it up, and resolve each `state:human-review-needed` issue first.
+Report: the PRD (clickable link), the child issues created with their labels, which need human input and why, and the dependency order. (If instead the PRD was parked for async sign-off at Step 4, report that no issues were created and the breakdown awaits a reply on the PRD.) **Never apply `state:agent-ready`** — state plainly that a human must review each `state:sliced` issue and gate it before `implement-issue` picks it up, and resolve each `state:human-review-needed` issue first.
 
 ## Relationship to other skills
 
@@ -149,9 +149,9 @@ Raw idea → ideate → brief → create-prd → PRD (type:prd)
                                            │  human applies state:slice-ready  ← gate in
                                        slice-prd  ← this skill — PRD → child issues (type:task)
                                            │  human applies state:agent-ready  ← gate out (per child)
-                                   build-from-issue → PR → review-pr
+                                   implement-issue → PR → review-pr
 ```
 
 - **create-prd** decides *what exactly* and writes the durable PRD.
 - **slice-prd** decides *in what order, in what pieces* and writes the buildable tasks.
-- **build-from-issue** decides *how* and implements each task — only after a human gates it.
+- **implement-issue** decides *how* and implements each task — only after a human gates it.

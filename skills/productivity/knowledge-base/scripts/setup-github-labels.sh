@@ -14,7 +14,9 @@ labels=(
   "state:slice-ready|FBCA04|HUMAN GATE — PRD approved to be sliced. Agents never apply."
   "state:agent-ready|FBCA04|HUMAN GATE — approved to build. Agents never apply."
   "state:sliced|C2E0C6|Child task clear and buildable, awaiting the build gate"
-  "state:blocked|B60205|Review found a major issue"
+  "state:building|006B75|Agent is actively building this task — claims it and drops it from the batch queue. Agent-set."
+  "state:review-ready|0969DA|A PR is built and awaiting review — review-pr's pickup trigger. Set by implement-issue, consumed by review-pr."
+  "state:blocked|B60205|Build or review found a major issue"
   "state:merge-ready|0E8A16|Both review axes clean"
   "state:human-review-needed|D93F0B|Findings, open questions, or a raw idea needing triage — needs a human"
 )
