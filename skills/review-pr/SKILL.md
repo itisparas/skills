@@ -7,106 +7,73 @@ description: Review the changes since a fixed point (commit, branch, tag, or mer
 
 Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
 
-- **Standards** — does the code conform to this organisation's documented coding standards?
+- **Standards** — does the code conform to this org's documented coding standards?
 - **Spec** — does the code faithfully implement the originating issue / PRD / spec?
 
-Both axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings.
+Both axes run as **parallel sub-agents** so they don't pollute each other's context; this skill aggregates their findings.
 
 ## Prerequisites
 
-- You must have a knowledge base for the organisation and set an environment variable `ORG_KB` for the current working directory (e.g., `export ORG_KB=./`).
-- The `gh` CLI must be authorised (`gh auth status`)
-- Check that Notion MCP tool is installed and configured for this organisation. If any Notion MCP tool call fails, set it up first:
+- A knowledge base for the org, with `ORG_KB` set to the working directory (e.g. `export ORG_KB=./`).
+- `gh` CLI authorised (`gh auth status`).
+- Notion MCP installed and configured. If a Notion MCP call fails, set it up, then retry:
 
 ```bash
-# For Codex CLI
-codex mcp add notion --url https://mcp.notion.com/mcp
-codex --enable rmcp_client
-codex mcp login notion
-
-# For Claude Code
-claude mcp add --transport http notion https://mcp.notion.com/mcp
-# Then authenticate by running /mcp and following the OAuth flow.
+# Codex CLI
+codex mcp add notion --url https://mcp.notion.com/mcp && codex --enable rmcp_client && codex mcp login notion
+# Claude Code
+claude mcp add --transport http notion https://mcp.notion.com/mcp   # then run /mcp and follow OAuth
 ```
-
-After login/restart, retry the original task. If it still fails, check the Notion MCP tool configuration and ensure that the correct credentials are being used.
 
 ## Running lean
 
-Keep the review token-cheap and the context window small:
-
-- **Don't read the diff yourself.** Pass the diff *command* to the sub-agents and let each read only what it needs. The main agent orchestrates; it doesn't load the whole diff into its own context.
-- **Search narrow.** Gather the standards/spec file list with targeted lookups, not by reading every candidate file. When searching **code** (locating constructs, checking a standard is followed), use `ast-grep` (`sg`) for structural matches, never plain `grep` — see the `ast-grep` skill. Keyword search is only for prose docs.
+- **Don't read the diff yourself.** Pass the diff *command* to the sub-agents; each reads only what it needs. The main agent orchestrates.
+- **Search narrow.** Gather the standards/spec file list with targeted lookups, not by reading every candidate. For **code** use `ast-grep` (`sg`), never `grep` (see the `ast-grep` skill); keyword search is only for prose.
 - **Lean sub-agents.** The 400-word caps below are deliberate — keep them. Ask for findings, not echoed code.
-- **Terse internally, plain to the user.** Your own scratch notes can be caveman-terse (drop articles/filler, `X -> Y` for cause). The final report and any PR comment stay plain enough for a non-technical stakeholder to follow.
+- **Terse internally, plain to the user.** Scratch notes can be caveman-terse (`X -> Y`); the final report and any PR comment stay plain enough for a non-technical stakeholder.
 
 ## Process
 
 ### 1. Pin the fixed point
 
-Whatever the user said is the fixed point — a commit SHA, branch name, tag, `main`, `HEAD~5`, etc. Don't be opinionated; pass it through. If they didn't specify one, ask: "Review against what — a branch, a commit, or `main`?" Don't proceed until you have it.
+Whatever the user said is the fixed point — a commit SHA, branch, tag, `main`, `HEAD~5`. Pass it through; don't be opinionated. If they gave none, ask: "Review against what — a branch, a commit, or `main`?" Don't proceed without it.
 
-Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison is against the merge-base). Also note the list of commits via `git log <fixed-point>..HEAD --oneline`.
-
-Then resolve the PR for the current branch: `gh pr view --json number,url,headRefName`. Capture the PR number for the tagging step in §5. If the branch has **no** open PR, the review still runs — but the tag/comment actions in §5 are skipped and you present the report inline instead.
+Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, against the merge-base); note commits via `git log <fixed-point>..HEAD --oneline`. Then resolve the PR: `gh pr view --json number,url,headRefName` — capture the number for §5. If the branch has **no** open PR, the review still runs but §5's tag/comment actions are skipped and you present the report inline.
 
 ### 2. Identify the spec source
 
-Look for the originating spec, in this order:
-
-1. The issue that triggered the PR, if any. If the PR is linked to an issue, fetch the issue body and any linked PRDs/specs/ADRs.
-2. A path the user passed as an argument.
-3. A PRD/spec file under organisation in Notion or `$ORG_KB/docs/` matching the branch name or feature.
-4. If nothing is found, ask the user where the spec is. If they say there isn't one, the **Spec** sub-agent will skip and report "no spec available".
+In order: (1) the issue that triggered the PR, plus any linked PRDs/specs/ADRs; (2) a path the user passed; (3) a PRD/spec in Notion or `$ORG_KB/docs/` matching the branch/feature; (4) if nothing is found, ask the user — if they say there's no spec, the **Spec** sub-agent skips and reports "no spec available".
 
 ### 3. Identify the standards sources
 
-Anything in the $ORG_KB or project repo that documents how code should be written. Common locations:
+Anything in `$ORG_KB` or the repo that documents how code should be written:
 
-- `CLAUDE.md`, `AGENTS.md`
-- `CONTRIBUTING.md`
+- `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md`
 - `CONTEXT.md`, `CONTEXT-MAP.md`, per-context `CONTEXT.md` files
 - ADRs in Notion or `$ORG_KB/docs/adr/` (architectural decisions are standards)
-- `.editorconfig`, `eslint.config.*`, `biome.json`, `prettier.config.*`, `tsconfig.json` (machine-enforced standards — note them but don't re-check what tooling already checks)
-- Any `STYLE.md`, `STANDARDS.md`, `STYLEGUIDE.md`, or similar at the repo root or under `docs/`
+- `.editorconfig`, `eslint.config.*`, `biome.json`, `prettier.config.*`, `tsconfig.json` (machine-enforced — note them, but don't re-check what tooling already checks)
+- Any `STYLE.md` / `STANDARDS.md` / `STYLEGUIDE.md` at the root or under `docs/`
 
-Collect the list of files. The **Standards** sub-agent will read them.
+Collect the file list for the **Standards** sub-agent.
 
 ### 4. Spawn both sub-agents in parallel
 
-Send a single message with two `Agent` tool calls. Use the `general-purpose` subagent for both.
+Send a single message with two `Agent` tool calls, `general-purpose` for both.
 
-**Standards sub-agent prompt** — include:
+**Standards sub-agent** — include the full diff command + commit list, the standards-source files from step 3, and: "Read the standards docs, then the diff. Report — per file/hunk where relevant — every place the diff violates a documented standard. Cite the standard (file + rule). Distinguish hard violations from judgement calls. Skip anything tooling enforces. For code search use `ast-grep` (`sg`), not `grep`. Under 400 words."
 
-- The full diff command and commit list.
-- The list of standards-source files you found in step 3.
-- The brief: "Read the standards docs. Then read the diff. Report — per file/hunk where relevant — every place the diff violates a documented standard. Cite the standard (file + the rule). Distinguish hard violations from judgement calls. Skip anything tooling enforces. For any code search, use `ast-grep` (`sg`) for structural matches, not `grep`. Under 400 words."
-
-**Spec sub-agent prompt** — include:
-
-- The diff command and commit list.
-- The path or fetched contents of the spec.
-- The brief: "Read the spec. Then read the diff. Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. For any code search, use `ast-grep` (`sg`) for structural matches, not `grep`. Under 400 words."
-
-If the spec is missing, skip the Spec sub-agent and note this in the final report.
+**Spec sub-agent** — include the diff command + commit list, the spec path/contents, and: "Read the spec, then the diff. Report: (a) requirements asked for that are missing or partial; (b) behaviour not asked for (scope creep); (c) requirements that look implemented but wrong. Quote the spec line for each. For code search use `ast-grep` (`sg`), not `grep`. Under 400 words." If the spec is missing, skip this sub-agent and note it in the report.
 
 ### 5. Aggregate
 
-Present the two reports under `## Standards` and `## Spec` headings, verbatim or lightly cleaned. Do **not** merge or rerank findings — the two axes are deliberately separate so the user can see them independently.
+Present the two reports under `## Standards` and `## Spec`, verbatim or lightly cleaned. Do **not** merge or rerank — the axes are deliberately separate.
 
-If there is a major issue in either axis, tag the PR with `state:blocked` and add a comment summarising the findings. If both axes are clean, tag the PR with `state:merge-ready`.
+- Major issue in either axis → tag the PR `state:blocked` + a comment summarising findings.
+- Both axes clean → tag `state:merge-ready`.
+- Findings needing human judgement that can't be auto-resolved → tag `state:human-review-needed` + a comment summarising them, or a follow-up issue referencing the PR with that label.
 
-If there are any findings that require human judgement and cannot be automatically resolved, tag the PR with `state:human-review-needed` and add a comment summarising the findings or creating a follow-up issue with reference to the PR and `state:human-review-needed` label.
-
-Refer to the open issues in the repo for any known problems that may affect the review. If any of the findings are already known issues, note them in the final report.
-
-End with a one-line summary in plain language a non-technical stakeholder can follow: total findings per axis, the worst single issue (if any) flagged, new issues created (if any).
+Check the repo's open issues for known problems; if any finding is a known issue, note it. End with a one-line plain-language summary a non-technical stakeholder can follow: total findings per axis, the worst single issue (if any), new issues created (if any).
 
 ## Why two axes
 
-A change can pass one axis and fail the other:
-
-- Code that follows every standard but implements the wrong thing → **Standards pass, Spec fail.**
-- Code that does exactly what the issue asked but breaks the project's conventions → **Spec pass, Standards fail.**
-
-Reporting them separately stops one axis from masking the other.
+A change can pass one axis and fail the other — code that follows every standard but implements the wrong thing (**Standards pass, Spec fail**), or code that does exactly what the issue asked but breaks conventions (**Spec pass, Standards fail**). Reporting them separately stops one from masking the other.
