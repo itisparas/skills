@@ -1,6 +1,6 @@
 ---
 name: instincts
-description: Capture, store, and apply portable coding preferences ("instincts") as hand-editable markdown rules — a project-tier `.instincts/` folder that travels with the repo, and a user-tier `~/.instincts/` synced to `github.com/<user>/instincts`. Owns the heavy operations only: distilling instincts from a codebase, bootstrapping the user repo, pushing/pulling, promoting/demoting between tiers, and regenerating the always-on index block in AGENTS.md. The everyday apply-and-update loop runs from that index with no skill invocation. Use when a user says "learn my instincts", "remember this preference", "manage/push/pull instincts", "promote this to my user instincts", or invokes /instincts.
+description: Capture, store, and apply portable coding preferences ("instincts") as hand-editable markdown rules — a project-tier `.instincts/` folder that travels with the repo, and a user-tier `~/.instincts/` synced to `github.com/<user>/instincts`. Owns the heavy operations only — distilling instincts from a codebase, bootstrapping the user repo, pushing/pulling, promoting/demoting between tiers, and regenerating the always-on index block in AGENTS.md. The everyday apply-and-update loop runs from that index with no skill invocation. Use when a user says "learn my instincts", "remember this preference", "manage/push/pull instincts", "promote this to my user instincts", or invokes /instincts.
 ---
 
 # Instincts
