@@ -17,6 +17,7 @@ Skills live under a category directory (`skills/<category>/<name>/`): **engineer
 | [`review-pr`](skills/engineering/review-pr/SKILL.md) | engineering | **Gatekeeper.** Reviews a diff (or a `state:review-ready` PR) on two independent axes — **Standards** and **Spec** — using parallel sub-agents, **aligns each finding's disposition with the user interview-style**, then posts the marked comment and outcome label. Never edits code — fixes go to `implement-issue` via `state:blocked`. | A side-by-side report + agreed PR comment + state label |
 | [`write-a-skill`](skills/productivity/write-a-skill/SKILL.md) | productivity | **Skill smith.** Interviews the user one question at a time (ideate-style), places the new skill among the existing ones, and drafts a `SKILL.md` against a house contract — token-lean, plainly worded, caveman-terse internally. | A new org-style `SKILL.md` (plus refs/scripts if needed) |
 | [`knowledge-base`](skills/productivity/knowledge-base/SKILL.md) | productivity | **KB bootstrapper & caretaker.** Interviews the user to pick a backend (GitHub, Notion, local, or hybrid), records the choice, scaffolds the full idea-to-merge structure (pipeline labels / databases / numbered folders + AGENTS.md), installs a detect-and-offer hook, and stays on as owner of the *structure*. The thing that builds the `ORG_KB` every other skill assumes. | A live knowledge base + `kb-config.yml` |
+| [`instincts`](skills/productivity/instincts/SKILL.md) | productivity | **Preference keeper.** Owns portable coding preferences ("instincts") as hand-editable markdown rules in a project-tier `.instincts/` folder and a user-tier `~/.instincts/` repo. Handles the heavy ops — distil from a codebase, bootstrap the user repo, push/pull, promote/demote, regenerate the `AGENTS.md` index — while the everyday apply loop runs off that index with no invocation. `knowledge-base` scaffolds the folder and wires the block. | `.instincts/` rule files + an always-on `AGENTS.md` index |
 | [`ast-grep`](skills/utility/ast-grep/SKILL.md) | utility | **Shared tool.** Structural code search with [ast-grep](https://ast-grep.github.io/). The other skills use `ast-grep` (`sg`) for **all code search** in place of `grep`. | — (referenced by the others) |
 
 > `security-review` is referenced by the workflow below but is **not** part of this repo — it's a sibling tool in the broader pipeline.
@@ -112,6 +113,8 @@ ln -s "$PWD/skills/engineering/slice-prd"     .claude/skills/slice-prd
 ln -s "$PWD/skills/engineering/implement-issue" .claude/skills/implement-issue
 ln -s "$PWD/skills/engineering/review-pr"     .claude/skills/review-pr
 ln -s "$PWD/skills/productivity/write-a-skill" .claude/skills/write-a-skill
+ln -s "$PWD/skills/productivity/knowledge-base" .claude/skills/knowledge-base
+ln -s "$PWD/skills/productivity/instincts"     .claude/skills/instincts
 ln -s "$PWD/skills/utility/ast-grep"          .claude/skills/ast-grep
 
 # …or globally

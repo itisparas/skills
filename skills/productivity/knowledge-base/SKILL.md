@@ -65,9 +65,11 @@ Run the deterministic setup for the chosen backend — this builds the *whole* i
 - **Notion** → create one database per pipeline doc-type via the Notion MCP (`notion-create-database`), per [REFERENCE.md](REFERENCE.md#notion).
 - **Hybrid** → run the GitHub script **and** the knowledge half (Notion databases or `scaffold-local.sh`), wiring each to the other.
 
+Then, for **every** backend, create a project-tier `.instincts/` folder so portable coding preferences travel with the repo. You only scaffold the empty folder — the `instincts` skill owns what goes inside it and the always-on apply loop. This is a developer-experience win: agents pick up the team's coding instincts automatically, no re-explaining.
+
 ## Step 5: Wire ownership through AGENTS.md
 
-Create or update `AGENTS.md` (and `CLAUDE.md` as `@AGENTS.md`) with a **Knowledge Base** pointer block: the backend, where the pipeline lives, where durable knowledge lives, and the line *"KB structure owned by the `knowledge-base` skill; backend recorded in `kb-config.yml`."* Keep AGENTS.md short — add a link, not content. Then install the detect-and-offer hook with `scripts/install-hook.sh`.
+Create or update `AGENTS.md` (and `CLAUDE.md` as `@AGENTS.md`) with a **Knowledge Base** pointer block: the backend, where the pipeline lives, where durable knowledge lives, and the line *"KB structure owned by the `knowledge-base` skill; backend recorded in `kb-config.yml`."* Keep AGENTS.md short — add a link, not content. Also seed the **instincts index block** (between `<!-- instincts:index:start -->` / `:end -->` markers) by running the `instincts` skill's `scripts/index.sh` — that block drives the always-on apply loop and stays owned by the `instincts` skill. Then install the detect-and-offer hook with `scripts/install-hook.sh`.
 
 ## Step 6: Caretaker mode (existing KB)
 
