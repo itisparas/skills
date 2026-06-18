@@ -1,6 +1,6 @@
 ---
 name: slice-prd
-description: Slice a gated PRD into independently-buildable issues using tracer-bullet vertical slices. Takes a type:prd issue number, or auto-searches for type:prd issues carrying the human gate state:slice-ready and processes them in batch. Investigates the codebase in a sub-agent, interviews the user one question at a time (plain language, analogies, a live example) to set slice coarseness before creating anything, then publishes child issues each with a Definition of Ready / Acceptance Criteria / Definition of Done checklist, cross-linked to the PRD and its brief. Clear slices are flagged state:sliced for a human to gate; ambiguous ones get state:human-review-needed. The step between create-prd and implement-issue. Use when a PRD is ready to break into work — e.g. "slice prd", "slice prd 250", "break this PRD into issues", "turn the PRD into tickets".
+description: Slice a gated PRD into independently-buildable issues using tracer-bullet vertical slices. Takes a type:prd issue number, or auto-searches for type:prd issues carrying the human gate state:slice-ready and processes them in batch. Investigates the codebase in a sub-agent, interviews the user one question at a time (plain language, analogies, a live example) to set slice coarseness before creating anything, then publishes child issues each with a Definition of Ready / Acceptance Criteria / Definition of Done checklist, cross-linked to the PRD and its brief. Clear slices are flagged state:buildable for a human to gate; ambiguous ones get state:human-review-needed; the PRD itself is marked state:sliced and stays open as the epic. The step between create-prd and implement-issue. Use when a PRD is ready to break into work — e.g. "slice prd", "slice prd 250", "break this PRD into issues", "turn the PRD into tickets".
 ---
 
 # Slice PRD
@@ -26,7 +26,8 @@ Never guess the next step from prose. **Every branch — which PRDs to pick up, 
 
 - **`state:slice-ready`** — **human gate in.** A human applies it to a `type:prd` to authorise slicing; batch mode only picks up PRDs carrying it. This skill **never** applies it.
 - **`type:task`** — set by this skill on every child issue it creates.
-- **`state:sliced`** — set by this skill on a **clear** child issue: "I believe this is buildable." It is *not* a build gate — a human still applies `state:agent-ready`.
+- **`state:buildable`** — set by this skill on a **clear** child issue: "I judged this slice buildable." It is *not* a build gate — a human still applies `state:agent-ready`.
+- **`state:sliced`** — set by this skill on the **PRD itself** (Step 6) the moment it's sliced: "this PRD has been broken down; it's now the open epic tracking its children." It's what tells you (and batch mode) a PRD is done vs still awaiting its gate. Removed only when the PRD closes, once every child has merged.
 - **`state:human-review-needed`** — set by this skill in two places: on an **ambiguous child issue** (missing info, unresolved design call) before it can be gated; and on the **PRD itself** (off `state:slice-ready`) to park a breakdown that needs async sign-off when no human is present (Step 4).
 - **`state:agent-ready`** — **human gate out**, applied per child issue before build. This skill **never** applies it.
 
@@ -80,7 +81,7 @@ Break the PRD into **tracer bullets**. Each slice:
 - prefers **many thin slices over few thick ones**;
 - carries a **Blocked by** list (which slices must land first), so they publish in dependency order.
 
-Classify each slice from the Step 2 findings: **clear** (no open questions — will get `state:sliced`) or **needs-a-human** (ambiguous, missing info, or an unresolved design call — will get `state:human-review-needed`). Prefer clear over needs-a-human where the PRD already decided it.
+Classify each slice from the Step 2 findings: **clear** (no open questions — will get `state:buildable`) or **needs-a-human** (ambiguous, missing info, or an unresolved design call — will get `state:human-review-needed`). Prefer clear over needs-a-human where the PRD already decided it.
 
 ## Step 4: Set the coarseness with the user
 
@@ -116,7 +117,7 @@ Publish in **dependency order** (blockers first) so real issue numbers fill each
 ```bash
 # clear slice — buildable, awaiting the human build gate
 gh issue create --title "<slice title>" --body-file <body> \
-  --label "type:task" --label "state:sliced"
+  --label "type:task" --label "state:buildable"
 # needs-a-human slice — has an open question to resolve first
 gh issue create --title "<slice title>" --body-file <body> \
   --label "type:task" --label "state:human-review-needed"
@@ -126,21 +127,21 @@ Never apply `state:agent-ready` — that's the human's gate out (Step 7).
 
 ## Step 6: Link the PRD as the epic
 
-Post the **durable epic record** — a marked comment listing the issues actually created (the permanent view of the slices; any Step 4 comment was only the pre-publish proposal). The PRD **stays open** as the tracking parent — the live reference until every child merges (unlike `create-prd`, which retires the brief). Then drop `state:slice-ready` so batch mode won't re-slice it:
+Post the **durable epic record** — a marked comment listing the issues actually created (the permanent view of the slices; any Step 4 comment was only the pre-publish proposal). The PRD **stays open** as the tracking parent — the live reference until every child merges (unlike `create-prd`, which retires the brief). Then mark the PRD **`state:sliced`** and drop `state:slice-ready` — the swap records "this PRD is sliced" *and* drops it from the batch queue so it won't be re-sliced:
 
 ```bash
 gh issue comment <prd> --body "> **🔪 slice-prd-agent**
 > Sliced into child issues — this PRD stays open as the epic until they all merge.
-> - [ ] #<a> <title>  (state:sliced)
+> - [ ] #<a> <title>  (state:buildable)
 > - [ ] #<b> <title>  (state:human-review-needed — needs your input)"
-gh issue edit <prd> --remove-label "state:slice-ready"
+gh issue edit <prd> --add-label "state:sliced" --remove-label "state:slice-ready"
 ```
 
 In **Notion** / **local KB**, add a "Sliced into <links>" line at the top of the PRD page/file and leave it open. Close the PRD only once all children are done.
 
 ## Step 7: Stop at the human gate
 
-Report: the PRD (clickable link), the child issues created with their labels, which need human input and why, and the dependency order. (If instead the PRD was parked for async sign-off at Step 4, report that no issues were created and the breakdown awaits a reply on the PRD.) **Never apply `state:agent-ready`** — state plainly that a human must review each `state:sliced` issue and gate it before `implement-issue` picks it up, and resolve each `state:human-review-needed` issue first.
+Report: the PRD (clickable link), the child issues created with their labels, which need human input and why, and the dependency order. (If instead the PRD was parked for async sign-off at Step 4, report that no issues were created and the breakdown awaits a reply on the PRD.) **Never apply `state:agent-ready`** — state plainly that a human must review each `state:buildable` issue and gate it before `implement-issue` picks it up, and resolve each `state:human-review-needed` issue first.
 
 ## Relationship to other skills
 

@@ -81,6 +81,7 @@ The coarseness conversation that sets this:
 > would you rather one bigger "whole reset flow" ticket? I'd keep them split — each is its own
 > demo, and slice 2 is genuinely blocked on a decision you still need to make.*
 
-On publish: #1 and #3 get `type:task` + `state:sliced`; #2 gets `type:task` +
+On publish: #1 and #3 get `type:task` + `state:buildable`; #2 gets `type:task` +
 `state:human-review-needed` with the open question (which email provider?) called out in its
-body. PRD #250 stays open as the epic with a checklist of the three.
+body. PRD #250 is marked `state:sliced` (off `state:slice-ready`) and stays open as the epic
+with a checklist of the three.

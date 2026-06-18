@@ -85,7 +85,7 @@ gh issue comment <id> --body "> **👷 implement-issue-agent**
 Report: the issue (link), the PR opened or updated (link) and that it carries `state:review-ready` for `review-pr`, the branch, which Acceptance Criteria or review findings are now covered by tests, and any known follow-up. In batch, one line per task — built / reworked / parked (blocked) / parked (needs human).
 
 ```
-slice-prd ─ type:task + state:sliced
+slice-prd ─ type:task + state:buildable
                       │  human applies state:agent-ready   ← gate in (human-only)
                       ▼
               implement-issue ── claims with state:building ──▶ PR (Closes #id)
