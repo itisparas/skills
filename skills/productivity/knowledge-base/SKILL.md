@@ -23,7 +23,7 @@ codex mcp add notion --url https://mcp.notion.com/mcp && codex --enable rmcp_cli
 ## Running lean
 
 - **Load once.** Read any existing `kb-config.yml` and `AGENTS.md` once in Step 1; work from a short in-memory summary.
-- **Search narrow.** Detection is a handful of file/label checks, not a repo crawl. For **code** use `ast-grep` (`sg`), never `grep` (see the `ast-grep` skill); keyword search is only for **prose**.
+- **Search narrow.** Detection is a handful of file/label checks, not a repo crawl. For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for **prose**.
 - **Deterministic work lives in `scripts/`.** Folder creation, label creation, and hook install are scripted — run them, don't regenerate the steps as prose. Long per-backend detail lives in [REFERENCE.md](REFERENCE.md), read only for the backend the user picked.
 - **Terse internally, plain to the user.** Scratch notes can be caveman-terse (`bk -> gh+notion`); everything the user reads stays warm, plain, and example-grounded (Step 2).
 

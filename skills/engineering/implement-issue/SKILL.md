@@ -19,7 +19,7 @@ The **implementer.** It picks up a task a human gated for building and drives it
 
 - `gh` CLI authorised (`gh auth status`) — reads issues/PRs, edits labels, opens the PR.
 - `ORG_KB` set — glossary (`CONTEXT.md` / `CONTEXT-MAP.md`), ADRs (`docs/adr/` or Notion), documented coding standards. Loaded once.
-- `ast-grep` (`sg`) for all code search — see the `ast-grep` skill.
+- `ast-grep` (`sg`) for all code search — common patterns in the `ast-grep` skill's REFERENCE.md.
 - Notion MCP only if this org's PRD/brief live in Notion (setup block in `create-prd`).
 
 ## Running lean

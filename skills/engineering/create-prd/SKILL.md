@@ -36,7 +36,7 @@ All comments and PRD bodies **must** begin with `> **📐 create-prd-agent**` �
 
 - **Don't read the codebase yourself.** The deep read happens in a **sub-agent** (Step 2); the main agent orchestrates and never loads the codebase.
 - **Load once.** Read the brief, glossary (`CONTEXT.md`), and relevant ADRs once in Step 1; work from a short summary.
-- **Search narrow.** For **code** use `ast-grep` (`sg`), never `grep` (see the `ast-grep` skill); keyword search is only for **prose**.
+- **Search narrow.** For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for **prose**.
 - **Terse internally, plain to the user.** Scratch reasoning can be caveman-terse (`X -> Y`; see `caveman`). Everything the user reads — questions and the PRD — stays plain and example-driven.
 
 ## Invocation modes

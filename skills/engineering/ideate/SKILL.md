@@ -31,7 +31,7 @@ All comments **must** begin with `> **⚓️ ideate-agent**` — distinguishing 
 ## Running lean
 
 - **Load once.** Read `ORG_KB`, glossary, and ADRs once in Step 1; work from a short summary.
-- **Search narrow.** Pull only the lines you need. For **code** use `ast-grep` (`sg`), never `grep` (see the `ast-grep` skill); keyword search is only for **prose**.
+- **Search narrow.** Pull only the lines you need. For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for **prose**.
 - **Stable prefix.** Reference loaded context rather than restating it, to keep prompt caching warm across the interview.
 - **Terse internally.** Scratch reasoning can be caveman-terse (`X -> Y`); this **never** touches what the user reads — questions stay warm, plain, complete (Step 3).
 

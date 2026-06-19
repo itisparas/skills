@@ -30,7 +30,7 @@ claude mcp add --transport http notion https://mcp.notion.com/mcp   # then run /
 ## Running lean
 
 - **Don't read the diff yourself.** Pass the diff *command* to the sub-agents; each reads only what it needs. The main agent orchestrates.
-- **Search narrow.** Gather the standards/spec file list with targeted lookups, not by reading every candidate. For **code** use `ast-grep` (`sg`), never `grep` (see the `ast-grep` skill); keyword search is only for prose.
+- **Search narrow.** Gather the standards/spec file list with targeted lookups, not by reading every candidate. For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for prose.
 - **Lean sub-agents.** The 400-word caps below are deliberate — keep them. Ask for findings, not echoed code.
 - **Terse internally, plain to the user.** Scratch notes can be caveman-terse (`X -> Y`); the final report and any PR comment stay plain enough for a non-technical stakeholder.
 
