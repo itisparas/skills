@@ -23,11 +23,13 @@ Avoid file paths and code snippets — they go stale. Exception: a small snippet
 encodes a decision more precisely than prose (a state machine, schema, or type shape) —
 inline just the decision-rich bit and note where it came from.
 
-## Definition of Ready  (true before an agent starts)
-- [ ] The behaviour above is unambiguous — no open design questions
+## Definition of Ready  (true before an agent starts — ALL must hold, else the issue parks)
+- [ ] The behaviour above is unambiguous — **no open design questions, no undecided seam**
+- [ ] Preconditions are explicit — every input, dependency, and assumed state is named
 - [ ] Blockers below are merged
 - [ ] The relevant glossary terms and ADRs are linked or quoted
-- [ ] Test seams to use are identified (which existing pattern to follow)
+- [ ] Test seams to use are identified **and the exact test command to run is known**
+- [ ] Project `.instincts/` rules in scope are linked (coding preferences to honour)
 
 ## Acceptance Criteria  (observable behaviour that proves it works)
 - [ ] <user-visible outcome 1 — phrased as what someone can do/see>
@@ -37,7 +39,7 @@ inline just the decision-rich bit and note where it came from.
 ## Definition of Done  (the bar before merge)
 - [ ] Acceptance criteria all met and demoed
 - [ ] Tests cover the new behaviour (following the seam noted above) and pass
-- [ ] Follows documented coding standards (review-pr Standards axis would pass)
+- [ ] Follows documented coding standards **and `.instincts/` rules** (review-pr Standards axis would pass)
 - [ ] No new lint/type errors; docs/glossary updated if terms changed
 
 ## Blocked by

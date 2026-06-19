@@ -31,6 +31,7 @@ All comments **must** begin with `> **⚓️ ideate-agent**` — distinguishing 
 ## Running lean
 
 - **Load once.** Read `ORG_KB`, glossary, and ADRs once in Step 1; work from a short summary.
+- **Context budget (≤150k, soft).** Hold summaries, not raw file dumps; spawn a sub-agent for any heavy codebase read rather than loading it inline.
 - **Search narrow.** Pull only the lines you need. For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for **prose**.
 - **Stable prefix.** Reference loaded context rather than restating it, to keep prompt caching warm across the interview.
 - **Terse internally.** Scratch reasoning can be caveman-terse (`X -> Y`); this **never** touches what the user reads — questions stay warm, plain, complete (Step 3).
@@ -111,4 +112,4 @@ Post or update the brief in the Step 5 destination, beginning with the marker.
 
 ## Step 7: Stop at the human gate
 
-Report: the classification, the disposition (new brief / appended / closed as duplicate / user-error / parked for triage with `state:human-review-needed`), and a link. **Never apply `state:agent-ready`** — end by stating that a human must review and gate the brief before anything is built.
+Report: the classification, the disposition (new brief / appended / closed as duplicate / user-error / parked for triage with `state:human-review-needed`), and a link. **Never apply `state:agent-ready`** — end by stating that a human must review and gate the brief before anything is built. For a low-risk brief, note the option: a human may apply **`state:auto-ok`** to let `create-prd` → `slice-prd` carry it through the cheap gates automatically (the build gate still stays human-only) — without it, each stage waits for its normal `state:prd-ready` / `state:slice-ready` gate.

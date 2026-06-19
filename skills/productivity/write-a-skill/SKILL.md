@@ -32,7 +32,7 @@ claude mcp add --transport http notion https://mcp.notion.com/mcp   # then run /
 Every skill you produce must satisfy all of these — the acceptance criteria for the draft:
 
 1. **Description with triggers.** Third person, ≤1024 chars. First sentence = what it does; then "Use when …" with concrete trigger phrases. It's the *only* thing the agent sees when deciding to load — make it discriminating. **YAML-safe:** the frontmatter is parsed by the installer (`npx skills`), and an unquoted scalar that contains `: ` (colon-space) or ` #` is invalid YAML — the parser errors and the skill is **silently skipped**. Use em-dashes or commas instead of mid-sentence colons (write `operations only — distilling`, not `operations only: distilling`), or wrap the whole value in quotes.
-2. **A `Running lean` section.** Teach the skill's own agent to be token-efficient: load once, search narrow (`ast-grep` for code), progressive disclosure, sub-agents for big reads, stable prefix for cache warmth.
+2. **A `Running lean` section.** Teach the skill's own agent to be token-efficient: load once, search narrow (`ast-grep` for code), progressive disclosure, sub-agents for big reads, stable prefix for cache warmth, and a **context budget (≤150k, soft)** — orchestrator holds summaries, heavy reads go to sub-agents. **Model tiering:** spawn read/review sub-agents on a cheap model (reuse the `agents/` personas — `kb-investigator`, `standards-reviewer`, `spec-reviewer` — by name where they fit); **code-writing stays on the strong model.** A skill that builds or reviews code treats the project `.instincts/` rules as a **standards source**.
 3. **Dual register, from `caveman`.** Internal scratch reasoning caveman-terse; everything the *user* reads plain, warm, complete. Never let terseness leak into user-facing text.
 4. **Non-technical by default.** Plain words (no jargon unless the user used it first), any technical thing explained with a quick analogy, questions grounded in a **live worked example**. At least one concrete example in the skill.
 5. **Org-aware.** Reads `ORG_KB`, respects the glossary (`CONTEXT.md`) and ADRs, doesn't duplicate an existing skill. If it posts comments/artefacts it carries a distinct marker (e.g. `> **🛠️ <skill>-agent**`) — pick one not already in the README "Comment markers" table and record it there.
@@ -120,7 +120,7 @@ Before declaring done, check every box:
 
 - [ ] Description third person, ≤1024 chars, with concrete "Use when …" triggers
 - [ ] Frontmatter is valid YAML — no `: ` (colon-space) or ` #` inside an unquoted `description`/`name`, else `npx skills` silently skips the skill (verify it loads after install)
-- [ ] `Running lean` present and specific (ast-grep for code, progressive disclosure, sub-agents for big reads)
+- [ ] `Running lean` present and specific (ast-grep for code, progressive disclosure, sub-agents for big reads, ≤150k context budget, model tiering — reads/reviews cheap, code-writing on the strong model; `.instincts/` as a standards source if it builds/reviews code)
 - [ ] Dual register honoured — terse internal, plain/warm user-facing
 - [ ] Plain language, at least one analogy and one live worked example
 - [ ] Org-aware: reads `ORG_KB`, respects glossary/ADRs, distinct marker if it posts; no duplicate

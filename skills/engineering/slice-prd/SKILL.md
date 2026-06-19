@@ -24,7 +24,8 @@ claude mcp add --transport http notion https://mcp.notion.com/mcp   # then run /
 
 Never guess the next step from prose. **Every branch — which PRDs to pick up, whether a slice is buildable or needs a human, when to stop — is decided by a GitHub label; every comment is stamped with the marker.** The README's "Labels" and "Comment markers" tables are the single source of truth.
 
-- **`state:slice-ready`** — **human gate in.** A human applies it to a `type:prd` to authorise slicing; batch mode only picks up PRDs carrying it. This skill **never** applies it.
+- **`state:slice-ready`** — **human gate in.** A human applies it to a `type:prd` to authorise slicing; batch mode picks up PRDs carrying it. This skill **never** applies it.
+- **`state:auto-ok`** — **standing human consent** (propagated from the brief/PRD by `create-prd`). Batch mode also picks up `state:auto-ok` PRDs and slices them **without** waiting for `state:slice-ready` — but **only when every slice is clear** (no ambiguous slice; Step 4). It stops at slicing: children get `state:buildable` and still wait for a human's `state:agent-ready`. The build gate is **never** auto-advanced.
 - **`type:task`** — set by this skill on every child issue it creates.
 - **`state:buildable`** — set by this skill on a **clear** child issue: "I judged this slice buildable." It is *not* a build gate — a human still applies `state:agent-ready`.
 - **`state:sliced`** — set by this skill on the **PRD itself** (Step 6) the moment it's sliced: "this PRD has been broken down; it's now the open epic tracking its children." It's what tells you (and batch mode) a PRD is done vs still awaiting its gate. Removed only when the PRD closes, once every child has merged.
@@ -37,7 +38,8 @@ All comments and child-issue bodies **must** begin with `> **🔪 slice-prd-agen
 
 ## Running lean
 
-- **Don't read the codebase yourself.** The deep read happens in a **sub-agent** (Step 2); the main agent orchestrates the interview and never loads the codebase.
+- **Don't read the codebase yourself.** The deep read happens in a **sub-agent** (Step 2) on a cheap, fast model; the main agent orchestrates the interview and never loads the codebase. Reads/reviews go cheap; only code-writing needs the strong model.
+- **Context budget (≤150k, soft).** Hold **summaries only** — never the codebase. If the window approaches ~150k tokens, spawn a fresh sub-agent rather than grow context. In batch, discard one PRD's working notes before the next.
 - **Load once.** Read the PRD, its brief, the glossary (`CONTEXT.md`), and relevant ADRs once in Step 1; work from a short summary.
 - **Search narrow.** For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for **prose**.
 - **Terse internally, plain to the user.** Scratch reasoning can be caveman-terse (`X -> Y`; see `caveman`). Everything the user reads — the interview and the breakdown — stays plain and example-driven.
@@ -46,10 +48,11 @@ All comments and child-issue bodies **must** begin with `> **🔪 slice-prd-agen
 
 **Single PRD** — `slice prd 250` / `slice prd #250`: slice one PRD. An explicit number **is** the authorisation, so it runs regardless of `state:slice-ready`. Strip any leading `#`, then go to Step 1.
 
-**Batch** — `slice prd`: process every gated PRD in sequence, reporting each outcome. Run Steps 1–7 for each.
+**Batch** — `slice prd`: process every gated PRD in sequence, reporting each outcome. Run Steps 1–7 for each. Pick up both human-gated (`state:slice-ready`) and standing-consent (`state:auto-ok`) PRDs:
 
 ```bash
 gh issue list --label "type:prd" --label "state:slice-ready" --state open --json number,title --jq '.[].number'
+gh issue list --label "type:prd" --label "state:auto-ok"     --state open --json number,title --jq '.[].number'
 ```
 
 ## Step 1: Locate and load the PRD
@@ -66,11 +69,9 @@ Then load the **brief** the PRD expands (follow the "Expands #…" cross-link), 
 
 ## Step 2: Investigate the codebase (sub-agent)
 
-Spawn a **`general-purpose` sub-agent** (`Agent` tool) to map the PRD onto the code, keeping the heavy read out of the main context. Give it the PRD's user stories + implementation decisions, the relevant glossary terms and ADRs, and this brief:
+Spawn the **`kb-investigator`** agent (read-only, runs on Haiku — `Agent` tool, `subagent_type: kb-investigator`) to map the PRD onto the code, keeping the heavy read out of the main context. Hand it **purpose: slicing**, the PRD's user stories + implementation decisions, and the relevant glossary terms and ADRs. It returns the natural seams, a proposed thin-vertical-slice list with dependency order, and any requirement that is **ambiguous, missing information, or needs a design decision** — ≤500 words, no file:line dumps. *If named subagents aren't supported on this harness, spawn a `general-purpose` sub-agent on a fast model and have it follow `agents/kb-investigator.md`.*
 
-> "Map this PRD onto the codebase to inform how it should be sliced into thin vertical slices (each cutting through every layer — schema, API, UI, tests — end-to-end). Identify the natural seams and the dependency order between slices. Flag any requirement that is **ambiguous, missing information, or needs a design decision** before it could be built. Note existing patterns and test patterns to follow. Use `ast-grep` (`sg`), not `grep`. Return decisions, a proposed slice list with dependencies, and the ambiguities — **no file:line dumps**. Under 500 words."
-
-Use what it returns to draft the slices (Step 3) and to mark which slices are clear vs ambiguous (Step 5).
+Use what it returns to draft the slices (Step 3) and to mark which slices are clear vs ambiguous (Step 5). The presence of **any** ambiguous slice blocks auto-advance (Step 4).
 
 ## Step 3: Draft tracer-bullet slices
 
@@ -89,20 +90,15 @@ Granularity is a judgement call — **never guess it and publish.** The breakdow
 
 The proposed breakdown is always shown as a numbered list — for each slice: **Title · Clear/Needs-a-human · Blocked by · User stories covered**.
 
-**A human is present (interactive run) — the conversation is the surface.** Show the breakdown in chat and agree the granularity interview-style: plain language, grounded in a **live example** from *this* PRD, one small question at a time (ask, wait, ask the next — never batch), always recommending an answer with reasoning. Analogy to offer: *"A slice is like one working slice of cake — a bit of every layer, sponge to icing — not the whole tray of sponge with no icing."* Ask, one at a time:
-
-- Does the granularity feel right — too coarse, or too fine? *("Slice 2 bundles login + password reset + 2FA — that's three demos in one. Split into three?")*
-- Are the dependency relationships correct?
-- Should any slices merge or split?
-- Are the right slices flagged as needing a human?
-
-Iterate until the user approves, then go to Step 5. Nothing is written to the tracker until they approve. An explicit interactive run is its own authorisation — if this PRD was previously parked (carries `state:human-review-needed`), swap the label back as you proceed:
+**A human is present (interactive run) — the conversation is the surface.** Show the breakdown in chat and agree the granularity interview-style: plain language, grounded in a **live example** from *this* PRD, one small question at a time (ask, wait, ask the next — never batch), always recommending an answer with reasoning (the cake analogy and a full worked interview are in [EXAMPLES.md](EXAMPLES.md)). Walk, one question at a time: is the granularity right (too coarse / too fine)? are the dependencies correct? should any slices merge or split? are the right slices flagged as needing a human? Iterate until the user approves, then go to Step 5. Nothing is written to the tracker until they approve. An explicit interactive run is its own authorisation — if this PRD was previously parked (carries `state:human-review-needed`), swap the label back as you proceed:
 
 ```bash
 gh issue edit <prd> --remove-label "state:human-review-needed" --add-label "state:slice-ready"
 ```
 
-**No human present (batch), or the human defers — the PRD is the surface.** Do **not** guess and publish. Post the proposed breakdown as a marked comment on the PRD for async review (template in [EXAMPLES.md](EXAMPLES.md)), then park the PRD by label and **skip it**:
+**No human present, PRD carries `state:auto-ok` (standing consent) — the low-risk auto-advance path.** Only when **every** slice from Step 3 is **clear** (no ambiguous/needs-a-human slice). Then publish the children directly (Step 5) without async sign-off — they get `state:buildable` and still wait for a human's `state:agent-ready`, so the build gate is preserved. If **any** slice is ambiguous, **do not auto-advance** — fall through to parking below (auto-ok never forces an unclear breakdown through).
+
+**No human present (batch without `state:auto-ok`, or the human defers) — the PRD is the surface.** Do **not** guess and publish. Post the proposed breakdown as a marked comment on the PRD for async review (template in [EXAMPLES.md](EXAMPLES.md)), then park the PRD by label and **skip it**:
 
 ```bash
 gh issue edit <prd> --add-label "state:human-review-needed" --remove-label "state:slice-ready"

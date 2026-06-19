@@ -20,12 +20,14 @@ The **implementer.** It picks up a task a human gated for building and drives it
 - `gh` CLI authorised (`gh auth status`) — reads issues/PRs, edits labels, opens the PR.
 - `ORG_KB` set — glossary (`CONTEXT.md` / `CONTEXT-MAP.md`), ADRs (`docs/adr/` or Notion), documented coding standards. Loaded once.
 - `ast-grep` (`sg`) for all code search — common patterns in the `ast-grep` skill's REFERENCE.md.
+- Project-tier **`.instincts/`** — portable coding preferences, loaded in Step 2 and applied during the build so the code matches the team's preferences first time (fewer review-rework loops). If the folder is **absent**, bootstrap it via the **`instincts`** skill before building.
 - Notion MCP only if this org's PRD/brief live in Notion (setup block in `create-prd`).
 
 ## Running lean
 
-- **Load once.** Read the task issue, its parent PRD, the brief, and (in rework) the PR's review comments in Step 2; hold a short summary and reference it — don't re-fetch.
-- **Search narrow.** Use `ast-grep` (`sg`) for code, never `grep`; keyword search only for prose. Push a big codebase read into a **sub-agent** that returns a short map.
+- **Load once.** Read the task issue, its parent PRD, the brief, the `.instincts/` rules, and (in rework) the PR's review comments in Step 2; hold a short summary and reference it — don't re-fetch.
+- **Search narrow.** Use `ast-grep` (`sg`) for code, never `grep`; keyword search only for prose. Push a big codebase read into the **`kb-investigator`** agent (read-only, Haiku — purpose: build map) that returns a short map. **Tiering:** reads/reviews go cheap; **the build itself writes code, so it stays on the strong (Opus) model** — don't downgrade the implementer.
+- **Context budget (≤150k, soft).** Hold summaries, not raw dumps. If the window approaches ~150k tokens during a long build, off-load the next codebase read to a fresh `kb-investigator` sub-agent rather than growing context.
 - **Stable prefix.** Keep loaded context fixed across the red-green-refactor loop so prompt caching stays warm.
 - **Terse internal, plain to the user.** Scratch reasoning can be caveman-terse (see `caveman`); the PR body, comments, and report stay plain and complete.
 
@@ -44,15 +46,15 @@ gh issue edit <id> --add-label "state:building" --remove-label "state:agent-read
 
 ## Step 2: Load context
 
-Read the task issue in full — its **Definition of Ready / Acceptance Criteria / Definition of Done** are the contract. Follow its **Parent** links to the PRD (durable decisions, seams) and brief (intent). Load the `ORG_KB` glossary, relevant ADRs, and the repo's documented coding standards (the same ones `review-pr` checks) so the work passes review first time. **In rework**, also read every `> **🔎 review-pr-agent**` comment on the PR — those findings are already aligned with the user (review-pr interviews them before posting), so treat each as agreed work to do.
+Read the task issue in full — its **Definition of Ready / Acceptance Criteria / Definition of Done** are the contract. Follow its **Parent** links to the PRD (durable decisions, seams) and brief (intent). Load the `ORG_KB` glossary, relevant ADRs, the repo's documented coding standards, **and the project-tier `.instincts/` rules** (the same standards + preferences `review-pr` checks) so the work passes review first time. If `.instincts/` doesn't exist yet, **bootstrap it via the `instincts` skill** before building. **In rework**, also read every `> **🔎 review-pr-agent**` comment on the PR — those findings are already aligned with the user (review-pr interviews them before posting), so treat each as agreed work to do.
 
 ## Step 3: Plan against the checklists — gate if not ready
 
-Check the **Definition of Ready** (fresh build) or that the review findings are clear enough to act on (rework). If a precondition is unmet, a requirement is ambiguous, or a design call the PRD left open blocks sound work, **do not guess** — park for a human (Step 5). Otherwise turn the work into a short ordered list of behaviours to drive out test-first. For a fresh build, cut a feature branch (`git switch -c feat/<id>-<slug>`); for rework, check out the PR's existing branch.
+Walk the **Definition of Ready** as a hard gate (fresh build) — **every** box must hold: behaviour unambiguous, preconditions explicit, blockers merged, glossary/ADRs linked, test seam **and the exact test command** known, `.instincts/` rules in scope identified. For rework, the review findings must be clear enough to act on. If **any** box fails — a precondition unmet, a requirement ambiguous, the test command unknown, or a design call the PRD left open — **do not guess and do not build a partial**: park for a human (Step 5). Guessing here is the dominant source of rework loops. Only when the gate fully passes, turn the work into a short ordered list of behaviours to drive out test-first. For a fresh build, cut a feature branch (`git switch -c feat/<id>-<slug>`); for rework, check out the PR's existing branch.
 
 ## Step 4: Build test-first (red → green → refactor)
 
-Work **one item at a time** — an Acceptance Criterion (fresh build) or a review finding (rework) — through a strict red-green-refactor loop. It's like writing the exam question before the answer: the failing test states exactly what "done" means, then you write just enough code to pass it, then tidy up with the test as a safety net. After each item, run the repo's feedback loops (lint, typecheck, test) and commit small, referencing the issue. The full loop, finding the test command, and handling items that resist a test are in **[REFERENCE.md](REFERENCE.md)**.
+Work **one item at a time** — an Acceptance Criterion (fresh build) or a review finding (rework) — through a strict red-green-refactor loop. It's like writing the exam question before the answer: the failing test states exactly what "done" means, then you write just enough code to pass it, then tidy up with the test as a safety net. Write the code to the documented standards **and the `.instincts/` rules** as you go — matching them now is what stops `review-pr` from bouncing the PR back. After each item, run the repo's feedback loops (lint, typecheck, test) and commit small, referencing the issue. The full loop, finding the test command, and handling items that resist a test are in **[REFERENCE.md](REFERENCE.md)**.
 
 ## Step 5: When you can't finish — route by label
 

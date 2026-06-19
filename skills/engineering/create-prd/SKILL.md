@@ -24,7 +24,8 @@ claude mcp add --transport http notion https://mcp.notion.com/mcp   # then run /
 
 Never guess the next step from prose. **Every branch — which briefs to pick up, whether one is authorised, when a human is needed — is decided by a GitHub label; every comment is stamped with the marker.** The README's "Labels" and "Comment markers" tables are the single source of truth.
 
-- **`state:prd-ready`** — **human gate in.** A human applies it to a `type:brief` to authorise a PRD; batch mode only picks up briefs carrying it.
+- **`state:prd-ready`** — **human gate in.** A human applies it to a `type:brief` to authorise a PRD; batch mode picks up briefs carrying it.
+- **`state:auto-ok`** — **standing human consent** for low-risk auto-advance. A human applies it once on a brief to let the chain carry a *low-risk* item through the cheap gates without per-step clicks. Batch mode also picks up `state:auto-ok` briefs; this skill **propagates** it to the PRD it writes (Step 6) so `slice-prd` can continue — but only when the work is genuinely low-risk (Step 3). It is **not** a human gate, and never substitutes for `state:agent-ready` (the build gate stays human-only).
 - **`state:human-review-needed`** — applied by this skill to a brief on a blocking open question (Step 3); how it asks for a human.
 - **`state:agent-ready`** — **human gate out**, applied to the PRD before build. This skill **never** applies it.
 
@@ -34,7 +35,8 @@ All comments and PRD bodies **must** begin with `> **📐 create-prd-agent**` �
 
 ## Running lean
 
-- **Don't read the codebase yourself.** The deep read happens in a **sub-agent** (Step 2); the main agent orchestrates and never loads the codebase.
+- **Don't read the codebase yourself.** The deep read happens in a **sub-agent** (Step 2) that runs on a cheap, fast model; the main agent orchestrates and never loads the codebase. Reads/reviews go cheap; only code-writing needs the strong model.
+- **Context budget (≤150k, soft).** Hold **summaries only** — never the codebase, never raw file dumps. If the window approaches ~150k tokens, spawn a fresh sub-agent rather than grow context. In batch, discard one brief's working notes before starting the next.
 - **Load once.** Read the brief, glossary (`CONTEXT.md`), and relevant ADRs once in Step 1; work from a short summary.
 - **Search narrow.** For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for **prose**.
 - **Terse internally, plain to the user.** Scratch reasoning can be caveman-terse (`X -> Y`; see `caveman`). Everything the user reads — questions and the PRD — stays plain and example-driven.
@@ -43,10 +45,11 @@ All comments and PRD bodies **must** begin with `> **📐 create-prd-agent**` �
 
 **Single brief** — `create prd 250` / `create prd #250`: expand one brief. An explicit number **is** the authorisation, so it runs regardless of `state:prd-ready`. Strip any leading `#`, then go to Step 1.
 
-**Batch** — `create prd`: process every gated brief in sequence, then report each one's outcome (PRD written + brief retired / held for human input / skipped). Run Steps 1–7 for each.
+**Batch** — `create prd`: process every gated brief in sequence, then report each one's outcome (PRD written + brief retired / held for human input / skipped). Run Steps 1–7 for each. Pick up both human-gated (`state:prd-ready`) and standing-consent (`state:auto-ok`) briefs:
 
 ```bash
 gh issue list --label "type:brief" --label "state:prd-ready" --state open --json number,title --jq '.[].number'
+gh issue list --label "type:brief" --label "state:auto-ok"   --state open --json number,title --jq '.[].number'
 ```
 
 ## Step 1: Locate and load the brief
@@ -63,11 +66,9 @@ Then load the glossary (`CONTEXT.md` / per-context files) and any ADRs in the af
 
 ## Step 2: Investigate the codebase (sub-agent)
 
-Spawn a **`general-purpose` sub-agent** (`Agent` tool) to map the brief onto the code, keeping the heavy read out of the main context. Give it the brief's problem + acceptance criteria, the relevant glossary terms and ADRs, and this brief:
+Spawn the **`kb-investigator`** agent (read-only, runs on Haiku — `Agent` tool, `subagent_type: kb-investigator`) to map the brief onto the code, keeping the heavy read out of the main context. Hand it **purpose: feasibility**, the brief's problem + acceptance criteria, and the relevant glossary terms and ADRs. It returns the components/seams, a **Low/Medium/High feasibility rating**, risks, and any decision needing human judgement — ≤500 words, no file:line dumps. *If named subagents aren't supported on this harness, spawn a `general-purpose` sub-agent on a fast model and have it follow `agents/kb-investigator.md`.*
 
-> "Investigate how this would be built. Identify the components/subsystems involved (read the code to confirm, don't guess from names). Map current behaviour and the seams where the change lands. Assess feasibility — **Low** (isolated, <3 files), **Medium** (multi-component, some design calls), **High** (cross-cutting, architectural). Surface risks, edge cases, and any decision needing human judgement. Note existing patterns to follow and the test patterns used here. Use `ast-grep` (`sg`), not `grep`. Return decisions and prose — **no file:line dumps**. Under 500 words."
-
-Fold what it returns into the PRD's *Implementation Decisions* and *Testing Decisions* — durable choices, not file paths (which rot; `implement-issue` re-investigates against the gated PRD).
+Fold what it returns into the PRD's *Implementation Decisions* and *Testing Decisions* — durable choices, not file paths (which rot; `implement-issue` re-investigates against the gated PRD). The feasibility rating also gates auto-advance (Step 3).
 
 ## Step 3: Resolve open questions
 
@@ -81,7 +82,9 @@ As answers land, **update the brief inline** so it becomes spec-ready. The inter
 gh issue edit <id> --remove-label "state:human-review-needed" --add-label "state:prd-ready"
 ```
 
-**No human present (batch, or the human defers)** — do **not** guess. Park the brief with the open questions, then route by label:
+**No human present, brief carries `state:auto-ok` (standing consent) — the low-risk auto-advance path.** Only when **both** hold: the `kb-investigator` rated feasibility **Low** *and* there are **no blocking open questions**. Then skip the interview, write the PRD (Steps 4–5), and propagate `state:auto-ok` to it (Step 6) so `slice-prd` continues. If feasibility is **Medium/High**, or any blocking question exists, **do not auto-advance** — fall through to parking below (this is the safety valve: auto-ok never forces a risky item through).
+
+**No human present (batch without `state:auto-ok`, or the human defers)** — do **not** guess. Park the brief with the open questions, then route by label:
 
 ```bash
 gh issue comment <id> --body "> **📐 create-prd-agent**
@@ -106,47 +109,9 @@ The brief is **retired** once the PRD exists — see Step 6.
 
 ## Step 5: Write the PRD
 
-Write for a non-technical stakeholder first, an engineer second; use the glossary's terms. Keep it about **decisions**, not code — file paths and snippets go stale.
+Write for a non-technical stakeholder first, an engineer second; use the glossary's terms. Keep it about **decisions**, not code — file paths and snippets go stale. The full PRD template (Problem, Solution, User Stories, Implementation/Testing Decisions, Scope, Risks) is in **[EXAMPLES.md](EXAMPLES.md)**.
 
-```markdown
-> **📐 create-prd-agent**
-
-## Problem Statement
-<the problem from the user's perspective — refined from the brief, 2–4 sentences>
-
-## Solution
-<the solution from the user's perspective — what changes for them>
-
-## User Stories
-<a long, numbered list covering all aspects of the feature>
-1. As a <actor>, I want <feature>, so that <benefit>
-2. …
-
-## Implementation Decisions
-- <modules to build/modify and their interfaces — described, not pathed>
-- <architectural decisions, schema changes, API contracts, key interactions>
-(No file paths or code. Exception: if a decision is captured more precisely by a small
-snippet — a state machine, schema, or type shape — inline just that decision-rich bit.)
-
-## Testing Decisions
-- <what a good test looks like here: external behaviour, not implementation detail>
-- <the test seams agreed in Step 3, and the existing prior art to follow>
-
-## Scope Assessment
-- **Complexity:** <Low / Medium / High>
-- **Confidence:** <High / Medium / Low>
-
-## Out of Scope
-- <what this PRD deliberately does not cover>
-
-## Risks & Open Questions
-- <anything still needing human judgement before or during the build>
-
-## Further Notes
-- <anything else worth recording>
-```
-
-Post or update the PRD in the Step 4 destination. If a relevant PRD already exists, refine it rather than duplicating.
+Post or update the PRD in the Step 4 destination. If a relevant PRD already exists, refine it rather than duplicating. **If the brief carried `state:auto-ok` and the work was low-risk** (Step 3 auto-advance), apply `state:auto-ok` to the new PRD so `slice-prd` can continue the chain — `gh issue edit <prd> --add-label "state:auto-ok"`. Otherwise leave it off; a human gates with `state:slice-ready` as normal.
 
 ## Step 6: Retire the superseded brief
 

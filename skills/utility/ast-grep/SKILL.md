@@ -36,6 +36,17 @@ rule:
   has: { pattern: await \$E, stopBy: end }' .
 ```
 
+## Enforcing it — the grep-guard hook
+
+The pipeline skills all say "use `sg`, not `grep`", but prose is easy to ignore. To give it teeth, install an **advisory** Claude Code hook that watches `Bash` calls and reminds you to switch when a `grep`/`rg` runs against code (extensions like `.ts`/`.py`/`.go`, or a recursive search). It **never blocks** — `grep` over prose, logs, and plain text stays fine.
+
+```bash
+skills/utility/ast-grep/scripts/install-grep-hook.sh        # project .claude/settings.json
+skills/utility/ast-grep/scripts/install-grep-hook.sh -g     # ~/.claude/settings.json
+```
+
+This wires `scripts/grep-guard.sh` as a `PreToolUse` hook on `Bash`. Both scripts are bundled here; the guard degrades gracefully without `jq`.
+
 ## REFERENCE.md
 
 The cheat sheet — every `sg` invocation, the full rule-object table, metavariable forms, ready-to-copy recipes, and debugging. **Load it only when you're constructing a non-trivial rule**, not on every search; the pattern search above handles the common case from memory.

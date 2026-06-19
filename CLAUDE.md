@@ -12,10 +12,11 @@ These skills target **private orgs / small projects**, not large public repos. K
 
 Skills live under a **category directory**: `skills/<category>/<name>/SKILL.md`.
 
-- `skills/engineering/` — the idea-to-merge build pipeline (`ideate`, `create-prd`, `slice-prd`, `review-pr`)
+- `skills/engineering/` — the idea-to-merge build pipeline (`ideate`, `create-prd`, `slice-prd`, `implement-issue`, `review-pr`)
 - `skills/utility/` — standalone tools (`ast-grep`)
 - `skills/productivity/` — routines that speed a human/agent (`write-a-skill`, `knowledge-base` — the latter bootstraps the `ORG_KB` the pipeline assumes — and `instincts`, which keeps portable coding preferences in a repo's `.instincts/` folder wired into AGENTS.md)
 - `skills/communication/`, `skills/domain/` — reserved for style-mode and domain-knowledge skills (see `write-a-skill` Step 3 for the placement → directory map)
+- `agents/` — **reusable sub-agent personas** (`kb-investigator`, `standards-reviewer`, `spec-reviewer`) the pipeline skills spawn by name, carrying `model`/`tools` frontmatter. Extracted once instead of inlined per skill. `npx skills` does **not** install these — `scripts/install-agents.sh` symlinks them into `.claude/agents/`. See the README **Reusable agents** section.
 
 **Authoring context matters.** The category layout above is for *this* repo. When `write-a-skill` runs inside a **live target project** (skills installed there via `npx skills`), it instead writes the skill flat under that runner's convention (`.agents/skills/<name>/` or the harness skills dir) and symlinks into harness-specific locations — not the category layout.
 
@@ -26,10 +27,12 @@ When you move or rename a skill, update the README **Skills** table links and th
 This is the load-bearing architectural idea — read the README's **Labels**, **Comment markers**, and **Conventions** sections; they are the single source of truth.
 
 - Every branch, route, and human hand-off is decided by a **GitHub label** — never inferred from prose. A skill picks up work because an issue carries a label, advances by swapping labels, and asks for a human by applying one.
-- **Human gates are human-only labels** (`state:prd-ready`, `state:slice-ready`, `state:agent-ready`) that agents read but **never** apply. This is non-negotiable; it's what keeps the pipeline auditable.
+- **Human gates are human-only labels** (`state:prd-ready`, `state:slice-ready`, `state:agent-ready`) that agents read but **never** apply. This is non-negotiable; it's what keeps the pipeline auditable. The one opt-in escape is `state:auto-ok` — *standing* human consent a person applies once to let a **low-risk** item self-advance through the **cheap** gates; agents honour it only while the work stays low-risk, and the build gate (`state:agent-ready`) is never auto-advanced.
 - Every agent comment opens with a distinct **marker** line (`> **⚓️ ideate-agent**`, etc.). No two skills share a marker; the README table is the registry.
 
-Pipeline: raw idea → `ideate` (lean `type:brief`) → human applies `state:prd-ready` → `create-prd` (durable `type:prd`) → human applies `state:slice-ready` → `slice-prd` (`type:task` child issues) → human applies `state:agent-ready` → `build-from-issue` (sibling, **not** in this repo) → PR → `review-pr`.
+Pipeline: raw idea → `ideate` (lean `type:brief`) → human applies `state:prd-ready` → `create-prd` (durable `type:prd`) → human applies `state:slice-ready` → `slice-prd` (`type:task` child issues) → human applies `state:agent-ready` → `implement-issue` → PR → `review-pr`.
+
+**Cost conventions (every pipeline skill):** mechanical reads/reviews run as sub-agents on **cheap models** (the `agents/` personas — Haiku for the investigator, Sonnet for reviewers); **code-writing stays on the strong model**. Each skill carries a **context budget (≤150k, soft)** — orchestrator holds summaries, heavy reads go to sub-agents. The project `.instincts/` rules are a **standards source** wired into both `implement-issue` (build against them) and `review-pr` (check against them), so the code is right first time and rework loops shrink.
 
 ## The house contract (how every SKILL.md is written)
 

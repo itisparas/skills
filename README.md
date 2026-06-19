@@ -22,6 +22,18 @@ Skills live under a category directory (`skills/<category>/<name>/`): **engineer
 
 > `security-review` is referenced by the workflow below but is **not** part of this repo — it's a sibling tool in the broader pipeline.
 
+## Reusable agents
+
+The pipeline skills hand their heavy reads and reviews to **shared sub-agent personas** that live in [`agents/`](agents/) — extracted once, carrying `model`/`tools` frontmatter, instead of re-written inline per skill. This is the main cost lever: the mechanical read-and-summarise jobs run on cheap, fast models with read-only tools; only code-writing stays on the strong model.
+
+| Agent | Model | Used by | Role |
+| --- | --- | --- | --- |
+| [`kb-investigator`](agents/kb-investigator.md) | Haiku | create-prd, slice-prd, implement-issue | Read-only codebase mapper — feasibility / slicing seams / build map. Returns a short decisions-and-prose map (≤500 words, no file:line dumps) and a Low/Med/High feasibility rating. |
+| [`standards-reviewer`](agents/standards-reviewer.md) | Sonnet | review-pr | Read-only Standards axis — checks the diff against documented standards **and the project `.instincts/` rules**. ≤400 words. |
+| [`spec-reviewer`](agents/spec-reviewer.md) | Sonnet | review-pr | Read-only Spec axis — checks the diff against the originating issue/PRD/ADR. ≤400 words. |
+
+**Tiering rule:** reads and reviews go to a cheap model; **anything that writes code (the `implement-issue` build, and review-pr's inline fixer) stays on the strong model.** `npx skills` does **not** install agents — see Installation.
+
 ## The workflow
 
 ```mermaid
@@ -104,6 +116,15 @@ npx skills add itisparas/skills --all -y --copy
 npx skills add itisparas/skills -g
 ```
 
+**Agents are a separate step.** `npx skills` installs `SKILL.md` folders only — it does **not** install the reusable agents (`.claude/agents/*.md`). After adding the skills, install the agents so skills can spawn them by name:
+
+```bash
+scripts/install-agents.sh         # per-project  -> .claude/agents/
+scripts/install-agents.sh -g      # global       -> ~/.claude/agents/
+```
+
+On harnesses without named subagents the skills fall back to a `general-purpose` sub-agent on a fast model that follows the matching `agents/*.md` file — so the workflow still runs, with model tiering degraded to advisory.
+
 <details>
 <summary>Manual install (symlink)</summary>
 
@@ -121,6 +142,11 @@ ln -s "$PWD/skills/utility/ast-grep"          .claude/skills/ast-grep
 
 # …or globally
 ln -s "$PWD/skills/engineering/ideate"    ~/.claude/skills/ideate
+
+# Agents (separate from skills) — or just run scripts/install-agents.sh
+ln -s "$PWD/agents/kb-investigator.md"    .claude/agents/kb-investigator.md
+ln -s "$PWD/agents/standards-reviewer.md" .claude/agents/standards-reviewer.md
+ln -s "$PWD/agents/spec-reviewer.md"      .claude/agents/spec-reviewer.md
 ```
 
 For Codex CLI and other runners, place the skill folders under that tool's skills directory (commonly `.agents/skills/`).
@@ -135,7 +161,7 @@ For Codex CLI and other runners, place the skill folders under that tool's skill
 
 ## Labels
 
-**Every branch, route, and hand-off in this workflow is decided by a label, and every agent comment is stamped with a marker — nothing is inferred from prose.** A skill picks up work because an issue carries a label, advances it by swapping labels, and asks for a human by applying one. Human decision points are *always* a human-only label (`state:prd-ready`, `state:slice-ready`, `state:agent-ready`) that agents read but never apply. This is what keeps the pipeline auditable and the human gates real: the label *is* the contract, and these tables are its single source of truth.
+**Every branch, route, and hand-off in this workflow is decided by a label, and every agent comment is stamped with a marker — nothing is inferred from prose.** A skill picks up work because an issue carries a label, advances it by swapping labels, and asks for a human by applying one. Human decision points are *always* a human-only label (`state:prd-ready`, `state:slice-ready`, `state:agent-ready`) that agents read but never apply. This is what keeps the pipeline auditable and the human gates real: the label *is* the contract, and these tables are its single source of truth. One **opt-in** label, `state:auto-ok`, lets a human grant *standing* consent so a low-risk item self-advances through the **cheap** gates — but it's still a human who applied it (auditable), the agents stop the moment risk appears, and the **build gate (`state:agent-ready`) stays strictly human**.
 
 ### Label lifecycle
 
@@ -167,6 +193,7 @@ State flows through GitHub labels rather than through any shared database. The s
 | `type:task` | The issue is a buildable child task sliced from a PRD | `slice-prd` | humans, `implement-issue` |
 | `state:buildable` | A child task is clear and buildable, awaiting the human build gate. Not itself a build gate. | `slice-prd` | humans |
 | `state:agent-ready` | **Human gate** — approved to build. Agents **never** apply this. | Human only | `implement-issue` (batch search) |
+| `state:auto-ok` | **Standing human consent** for low-risk auto-advance. A human applies it once on a brief/PRD; the chain then carries a *low-risk* item through the **cheap** gates (`prd-ready`, `slice-ready`) without per-step clicks. `create-prd`/`slice-prd` honour it **only** when the work is low-risk (feasibility Low / no ambiguous slice), else they park `state:human-review-needed`. `create-prd` propagates it brief → PRD. It is **not** a gate and **never** substitutes for `state:agent-ready` — the build gate stays human-only. | Human applies; `create-prd` propagates | `create-prd`, `slice-prd` (batch search) |
 | `state:building` | A task is being actively built — claims it and drops it from the batch queue. Removed when it parks; retired with the issue when its PR closes it. | `implement-issue` | `implement-issue`, humans |
 | `state:review-ready` | A **PR** is built (or reworked) and awaiting review — the hand-off from build to review. Set on first PR and after each rework round; consumed (removed) by `review-pr` when it posts its outcome. | `implement-issue` | `review-pr` (batch search), humans |
 | `state:blocked` | A build can't finish and is parked mid-stream for a human to authorise a retry. (Review no longer emits this — `review-pr` fixes agreed changes inline via an `implement-issue` sub-agent rather than handing off by label.) | `implement-issue` | humans |
@@ -196,7 +223,9 @@ When [`write-a-skill`](skills/productivity/write-a-skill/SKILL.md) authors a new
 
 - **Labels and markers are the control plane** — every branch, route, and human-attention hand-off is decided by a label, and every agent comment carries a marker. Skills don't infer state from prose; they read a label, act, and swap it. Human gates are always human-only labels. The **Labels** and **Comment markers** tables are the single source of truth, and `write-a-skill` enforces this on every new skill.
 - **`ORG_KB`** — the organisation knowledge base (glossary in `CONTEXT.md` / `CONTEXT-MAP.md`, decisions in `docs/adr/` or Notion) is loaded **once** per run.
-- **Token discipline** — load context once, search narrow (ast-grep for code, keyword search for prose), keep a stable prompt prefix for caching, and keep internal reasoning terse. None of this compression ever touches user-facing text, which stays plain and example-driven.
+- **Token discipline** — load context once, search narrow (ast-grep for code, keyword search for prose), keep a stable prompt prefix for caching, and keep internal reasoning terse. Each pipeline skill carries a **context budget (≤150k, soft)**: the orchestrator holds summaries, the heavy reads live in sub-agents. None of this compression ever touches user-facing text, which stays plain and example-driven.
+- **Model tiering** — the mechanical reads and reviews run as sub-agents on **cheap, fast models** (the [`agents/`](agents/) personas: `kb-investigator` on Haiku, the reviewers on Sonnet); **anything that writes code stays on the strong model** (the `implement-issue` build, review-pr's inline fixer). This is the main cost lever for running the pipeline.
+- **Instincts in the loop** — the project-tier `.instincts/` rules (owned by the `instincts` skill) are a **standards source**: `implement-issue` builds against them and `review-pr` checks against them, so build and review share one rubric and the code is right first time — fewer rework loops.
 - **Plain language** — user-facing questions and reports assume a non-technical reader: everyday words, quick analogies, and concrete live examples over abstractions.
 
 ## Attribution

@@ -29,7 +29,8 @@ claude mcp add --transport http notion https://mcp.notion.com/mcp   # then run /
 
 ## Running lean
 
-- **Don't read the diff yourself.** Pass the diff *command* to the sub-agents; each reads only what it needs. The main agent orchestrates.
+- **Don't read the diff yourself.** Pass the diff *command* to the review sub-agents (read-only, run on Sonnet); each reads only what it needs. The main agent orchestrates. **Tiering:** the reviews go cheap, but the inline **fix writes code, so it stays on the strong (Opus) model** (§6a).
+- **Context budget (≤150k, soft).** Hold the sub-agents' short reports + your interview notes — never the diff itself. If a long fix loop grows the window toward ~150k, re-spawn a fresh review sub-agent over the new diff rather than carrying it inline.
 - **Search narrow.** Gather the standards/spec file list with targeted lookups, not by reading every candidate. For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for prose.
 - **Lean sub-agents.** The 400-word caps below are deliberate — keep them. Ask for findings, not echoed code.
 - **Terse internally, plain to the user.** Scratch notes can be caveman-terse (`X -> Y`); the final report and any PR comment stay plain enough for a non-technical stakeholder.
@@ -60,19 +61,20 @@ Anything in `$ORG_KB` or the repo that documents how code should be written:
 
 - `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md`
 - `CONTEXT.md`, `CONTEXT-MAP.md`, per-context `CONTEXT.md` files
+- **Project-tier `.instincts/` rules** — portable coding preferences are standards here; the same ones `implement-issue` built against. Include them so build and review share one rubric.
 - ADRs in Notion or `$ORG_KB/docs/adr/` (architectural decisions are standards)
 - `.editorconfig`, `eslint.config.*`, `biome.json`, `prettier.config.*`, `tsconfig.json` (machine-enforced — note them, but don't re-check what tooling already checks)
 - Any `STYLE.md` / `STANDARDS.md` / `STYLEGUIDE.md` at the root or under `docs/`
 
-Collect the file list for the **Standards** sub-agent.
+Collect the file list for the **`standards-reviewer`** agent.
 
-### 4. Spawn both sub-agents in parallel
+### 4. Spawn both review agents in parallel
 
-Send a single message with two `Agent` tool calls, `general-purpose` for both.
+Send a single message with two `Agent` tool calls — `subagent_type: standards-reviewer` and `subagent_type: spec-reviewer` (both read-only, run on Sonnet; their rubrics and ≤400-word caps live in the agent files). *If named subagents aren't supported on this harness, spawn two `general-purpose` sub-agents on a fast model following `agents/standards-reviewer.md` and `agents/spec-reviewer.md`.*
 
-**Standards sub-agent** — include the full diff command + commit list, the standards-source files from step 3, and: "Read the standards docs, then the diff. Report — per file/hunk where relevant — every place the diff violates a documented standard. Cite the standard (file + rule). Distinguish hard violations from judgement calls. Skip anything tooling enforces. For code search use `ast-grep` (`sg`), not `grep`. Under 400 words."
+**`standards-reviewer`** — pass the full diff command + commit list and the standards-source files from step 3 (**including the `.instincts/` rules**). It reports every place the diff violates a documented standard or instinct, citing each, hard-violation vs judgement-call.
 
-**Spec sub-agent** — include the diff command + commit list, the spec path/contents, and: "Read the spec, then the diff. Report: (a) requirements asked for that are missing or partial; (b) behaviour not asked for (scope creep); (c) requirements that look implemented but wrong. Quote the spec line for each. For code search use `ast-grep` (`sg`), not `grep`. Under 400 words." If the spec is missing, skip this sub-agent and note it in the report.
+**`spec-reviewer`** — pass the diff command + commit list and the spec path/contents. It reports (a) missing/partial requirements, (b) scope creep, (c) implemented-but-wrong, each tied to a quoted spec line. If the spec is missing, skip it and note "no spec available" in the report.
 
 ### 5. Align with the user, then post
 
@@ -98,8 +100,8 @@ Unless something was parked as `state:human-review-needed`, the PR is now clean 
 
 **6a. Trigger the fix — `Agent` tool + `implement-issue`.** When the interview agrees a code change, review-pr drives the fix itself instead of handing off by label:
 
-- Call the **`Agent`** tool (subagent `general-purpose`) telling it to run the **`implement-issue`** skill. Hand it the **PR number and branch**, the **agreed findings verbatim** (per axis), and the review context. Instruct it to rework the PR **test-first** against exactly those findings and push — `implement-issue`'s own rework path.
-- When it returns, **verify the fix landed**: re-diff, and for a non-trivial change re-run the affected axis sub-agent over the new diff. If anything is still open, spawn another `implement-issue` pass. **Loop until clean.**
+- Call the **`Agent`** tool (subagent `general-purpose`, **on the session model — Opus**; this one writes code, so it is *not* downgraded like the read-only review agents) telling it to run the **`implement-issue`** skill. Hand it the **PR number and branch**, the **agreed findings verbatim** (per axis), and the review context. Instruct it to rework the PR **test-first** against exactly those findings and push — `implement-issue`'s own rework path.
+- When it returns, **verify the fix landed**: re-diff, and for a non-trivial change re-run the affected `standards-reviewer` / `spec-reviewer` agent over the new diff. If anything is still open, spawn another `implement-issue` pass. **Loop until clean.**
 - If the fix plan is at all ambiguous, confirm it with the user before spawning.
 
 **6b. Merge and close — this skill's job.** Once nothing remains to fix and nothing is parked for a human, **review-pr lands the PR — not a human, not a label:**
