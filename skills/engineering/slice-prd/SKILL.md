@@ -71,7 +71,7 @@ Then load the **brief** the PRD expands (follow the "Expands #…" cross-link), 
 
 Spawn the **`kb-investigator`** agent (read-only, runs on Haiku — `Agent` tool, `subagent_type: kb-investigator`) to map the PRD onto the code, keeping the heavy read out of the main context. Hand it **purpose: slicing**, the PRD's user stories + implementation decisions, and the relevant glossary terms and ADRs. It returns the natural seams, a proposed thin-vertical-slice list with dependency order, a per-slice **component-level build map** (ordered steps, no file:line), and any requirement that is **ambiguous, missing information, or needs a design decision** — ≤500 words, no file:line dumps. *If named subagents aren't supported on this harness, spawn a `general-purpose` sub-agent on a fast model and have it follow `agents/kb-investigator.md`.*
 
-Use what it returns to draft the slices (Step 3) and to mark which slices are clear vs ambiguous (Step 5). The presence of **any** ambiguous slice blocks auto-advance (Step 4).
+Use what it returns to draft the slices (Step 3) and to mark which slices are clear vs ambiguous (Step 5). The presence of **any** ambiguous slice blocks auto-advance (Step 4). The investigator reads any `.agent-memory/issue-<n>.md` map `create-prd` already seeded and extends it (re-deriving only what changed since), so this slicing pass builds on the earlier feasibility read instead of mapping the code cold — see its **Memory** section.
 
 ## Step 3: Draft tracer-bullet slices
 

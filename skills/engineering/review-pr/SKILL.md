@@ -30,7 +30,9 @@ claude mcp add --transport http notion https://mcp.notion.com/mcp   # then run /
 ## Running lean
 
 - **Don't read the diff yourself.** Pass the diff *command* to the review sub-agents (read-only, run on Sonnet); each reads only what it needs. The main agent orchestrates. **Tiering:** the reviews go cheap, but the inline **fix writes code, so it stays on the strong (Opus) model** (§6a).
-- **Context budget (≤150k, soft).** Hold the sub-agents' short reports + your interview notes — never the diff itself. If a long fix loop grows the window toward ~150k, re-spawn a fresh review sub-agent over the new diff rather than carrying it inline.
+- **Context budget (≤150k, soft).** Hold the sub-agents' short reports + your interview notes — never the diff itself. If a long fix loop grows the window, re-spawn the reviewer over its **memory + the incremental diff** (`<last-reviewed-SHA>..HEAD`), not the full diff carried inline (§6a).
+- **Review the delta, not everything, each loop.** The reviewers cache their distilled findings in `.agent-memory/pr-<n>.md` (a non-authoritative cache — see §4/§6a). On a rework pass, hand each reviewer that memory + only the **incremental diff since its last-reviewed SHA**, so it re-reviews the change, not the whole PR + all standards from scratch. This is the loop's main saving.
+- **Stable prompt prefix for cache warmth.** Order each reviewer's prompt **stable-part-first**: the standards/spec sources (large, fixed across loops) before the diff (volatile, last). Keep the wording fixed run-to-run so prompt caching stays warm across rework passes.
 - **Search narrow.** Gather the standards/spec file list with targeted lookups, not by reading every candidate. For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for prose.
 - **Lean sub-agents.** The 400-word caps below are deliberate — keep them. Ask for findings, not echoed code.
 - **Be concise, sacrifice grammar for the sake of concision.** Internally and in-session, caveman-terse (`X -> Y`); the final report and any PR comment still stay plain enough for a non-technical stakeholder.
@@ -72,6 +74,8 @@ Collect the file list for the **`standards-reviewer`** agent.
 
 Send a single message with two `Agent` tool calls — `subagent_type: standards-reviewer` and `subagent_type: spec-reviewer` (both read-only, run on Sonnet; their rubrics and ≤400-word caps live in the agent files). *If named subagents aren't supported on this harness, spawn two `general-purpose` sub-agents on a fast model following `agents/standards-reviewer.md` and `agents/spec-reviewer.md`.*
 
+Order each prompt **stable-part-first** (standards/spec sources, then the diff) for cache warmth, and pass the **PR number** so each reviewer seeds its `.agent-memory/pr-<n>.md` cache on this first pass — the rework loop (§6a) reads from it. (No PR yet, e.g. a bare branch review? Skip the cache; review cold.)
+
 **`standards-reviewer`** — pass the full diff command + commit list and the standards-source files from step 3 (**including the `.instincts/` rules**). It reports every place the diff violates a documented standard or instinct, citing each, hard-violation vs judgement-call.
 
 **`spec-reviewer`** — pass the diff command + commit list and the spec path/contents. It returns a **`US#` requirement-coverage table** (covered / partial / missing — the Spec axis as a checklist against IDs), then (b) scope creep and (c) implemented-but-wrong, each tied to a quoted spec line. If the spec is missing, skip it and note "no spec available" in the report.
@@ -101,7 +105,7 @@ Unless something was parked as `state:human-review-needed`, the PR is now clean 
 **6a. Trigger the fix — `Agent` tool + `implement-issue`.** When the interview agrees a code change, review-pr drives the fix itself instead of handing off by label:
 
 - Call the **`Agent`** tool (subagent `general-purpose`, **on the session model — Opus**; this one writes code, so it is *not* downgraded like the read-only review agents) telling it to run the **`implement-issue`** skill. Hand it the **PR number and branch**, the **agreed findings verbatim** (per axis), and the review context. Instruct it to rework the PR **test-first** against exactly those findings and push — `implement-issue`'s own rework path.
-- When it returns, **verify the fix landed**: re-diff, and for a non-trivial change re-run the affected `standards-reviewer` / `spec-reviewer` agent over the new diff. If anything is still open, spawn another `implement-issue` pass. **Loop until clean.**
+- When it returns, **verify the fix landed — incrementally, not from scratch**: re-diff, and for a non-trivial change re-run the affected reviewer over its **memory + the incremental diff since its last-reviewed SHA** (`git diff <last-reviewed-SHA>..HEAD`), *not* the full merge-base diff. The reviewer loads `.agent-memory/pr-<n>.md`, re-reviews only the hunks the fix touched, updates its memory, and returns only what changed. This turns the loop from *re-review-everything × N passes* into *re-review-the-delta*. If anything is still open, spawn another `implement-issue` pass. **Loop until clean.**
 - If the fix plan is at all ambiguous, confirm it with the user before spawning.
 
 **6b. Merge and close — this skill's job.** Once nothing remains to fix and nothing is parked for a human, **review-pr lands the PR — not a human, not a label:**

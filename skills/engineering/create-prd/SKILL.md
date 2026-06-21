@@ -68,7 +68,7 @@ Then load the glossary (`CONTEXT.md` / per-context files) and any ADRs in the af
 
 Spawn the **`kb-investigator`** agent (read-only, runs on Haiku — `Agent` tool, `subagent_type: kb-investigator`) to map the brief onto the code, keeping the heavy read out of the main context. Hand it **purpose: feasibility**, the brief's problem + acceptance criteria, and the relevant glossary terms and ADRs. It returns the components/seams, a **Low/Medium/High feasibility rating**, risks, and any decision needing human judgement — ≤500 words, no file:line dumps. *If named subagents aren't supported on this harness, spawn a `general-purpose` sub-agent on a fast model and have it follow `agents/kb-investigator.md`.*
 
-Fold what it returns into the PRD's *Implementation Decisions* and *Testing Decisions* — durable choices, not file paths (which rot; `implement-issue` re-investigates against the gated PRD). The feasibility rating also gates auto-advance (Step 3).
+Fold what it returns into the PRD's *Implementation Decisions* and *Testing Decisions* — durable choices, not file paths (which rot; `implement-issue` re-investigates against the gated PRD). The feasibility rating also gates auto-advance (Step 3). The investigator seeds its findings into `.agent-memory/issue-<brief>.md` (a non-authoritative cache, safe to delete) so `slice-prd` and `implement-issue` extend the same map rather than re-investigating cold — see its **Memory** section.
 
 ## Step 3: Resolve open questions
 

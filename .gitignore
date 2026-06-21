@@ -19,3 +19,6 @@ Icon?
 *.log
 tmp/
 .tmp/
+
+# Agent memory cache — non-authoritative accelerator, safe to delete (see README Conventions)
+.agent-memory/
