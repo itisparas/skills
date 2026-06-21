@@ -1,6 +1,6 @@
 ---
 name: instincts
-description: Capture, store, and apply portable coding preferences ("instincts") as hand-editable markdown rules — a project-tier `.instincts/` folder that travels with the repo, and a user-tier `~/.instincts/` synced to `github.com/<user>/instincts`. Owns the heavy operations only — distilling instincts from a codebase, bootstrapping the user repo, pushing/pulling, promoting/demoting between tiers, and regenerating the always-on index block in AGENTS.md. The everyday apply-and-update loop runs from that index with no skill invocation. Use when a user says "learn my instincts", "remember this preference", "manage/push/pull instincts", "promote this to my user instincts", or invokes /instincts.
+description: Capture, store, and apply portable coding preferences ("instincts") as hand-editable markdown rules — a project-tier `.instincts/` folder that travels with the repo, and a user-tier `~/.instincts/` synced to `github.com/<user>/instincts`. Owns the heavy operations only — distilling instincts from a codebase, bootstrapping the user repo, pushing/pulling, promoting/demoting between tiers, and regenerating the always-on index block in AGENTS.md. The everyday apply-and-update loop runs from that index with no skill invocation. Use when a user says "learn my instincts", "remember this preference", "ratify starter principles" for a new/greenfield project, "manage/push/pull instincts", "promote this to my user instincts", or invokes /instincts.
 ---
 
 # Instincts
@@ -60,6 +60,7 @@ This is where instincts earn their keep, and it lives in `AGENTS.md`, not here:
 The agent does all distillation; transport is plain git + `gh`. Trigger on `/instincts` or intent.
 
 - **Learn / distill** — read the codebase (ast-grep) and the user's stated preferences, write or revise instinct files, auto-classify each into project or user tier.
+- **Ratify (greenfield)** — when there's **no codebase to distil from** (a new project), establish founding **project-tier** rules by a short interview — one question at a time, plainly, recommending an answer — covering the three steering areas: **tech defaults** (language/framework/tooling choices), **structure conventions** (layout, naming, module boundaries), and **product principles** (what the project optimises for). Write each as an ordinary `.instincts/` rule with a confidence — **no new file type, no new tier** — then run `index`. This is the "principles before features" entry point `knowledge-base` offers at bootstrap.
 - **Bootstrap user repo** — create `github.com/<user>/instincts` and seed `~/.instincts/` on first `push -g`.
 - **push / pull** — default = **project** tier: a scoped commit of `./.instincts/**` only, on the current branch, **no auto-push** — it rides the user's next PR. `-g` = **user** tier, synced to the personal repo. `pull alice/testing` cross-imports another user's public instinct as plain files you own.
 - **promote / demote** — move a rule between tiers (confirm with the user before promoting project → user).

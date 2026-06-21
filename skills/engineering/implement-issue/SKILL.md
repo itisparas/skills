@@ -50,11 +50,13 @@ Read the task issue in full — its **Definition of Ready / Acceptance Criteria 
 
 ## Step 3: Plan against the checklists — gate if not ready
 
-Walk the **Definition of Ready** as a hard gate (fresh build) — **every** box must hold: behaviour unambiguous, preconditions explicit, blockers merged, glossary/ADRs linked, test seam **and the exact test command** known, `.instincts/` rules in scope identified. For rework, the review findings must be clear enough to act on. If **any** box fails — a precondition unmet, a requirement ambiguous, the test command unknown, or a design call the PRD left open — **do not guess and do not build a partial**: park for a human (Step 5). Guessing here is the dominant source of rework loops. Only when the gate fully passes, turn the work into a short ordered list of behaviours to drive out test-first. For a fresh build, cut a feature branch (`git switch -c feat/<id>-<slug>`); for rework, check out the PR's existing branch.
+Walk the **Definition of Ready** as a hard gate (fresh build) — **every** box must hold: behaviour unambiguous, preconditions explicit, blockers merged, glossary/ADRs linked, test seam **and the exact test command** known, `.instincts/` rules in scope identified. For rework, the review findings must be clear enough to act on. If **any** box fails — a precondition unmet, a requirement ambiguous, the test command unknown, or a design call the PRD left open — **do not guess and do not build a partial**: park for a human (Step 5). Guessing here is the dominant source of rework loops. Only when the gate fully passes, turn the work into a short ordered list of behaviours to drive out test-first.
+
+**Resolve the build map — don't explore in-session.** The issue carries a durable **Implementation Map** (component-level, `US#`-tagged) from `slice-prd`. Rather than reading the codebase yourself on the strong model, spawn **`kb-investigator`** (`Agent` tool, `subagent_type: kb-investigator`, **purpose: build map**) and hand it that map to **resolve to current file:line targets** in build order. Build against the tight map it returns — the heavy read stays on the cheap model, the strong-model session stays lean (this is the main per-build token saving). If the issue has no map (older slice), it resolves from the Acceptance Criteria as before. For a fresh build, cut a feature branch (`git switch -c feat/<id>-<slug>`); for rework, check out the PR's existing branch.
 
 ## Step 4: Build test-first (red → green → refactor)
 
-Work **one item at a time** — an Acceptance Criterion (fresh build) or a review finding (rework) — through a strict red-green-refactor loop. It's like writing the exam question before the answer: the failing test states exactly what "done" means, then you write just enough code to pass it, then tidy up with the test as a safety net. Write the code to the documented standards **and the `.instincts/` rules** as you go — matching them now is what stops `review-pr` from bouncing the PR back. After each item, run the repo's feedback loops (lint, typecheck, test) and commit small, referencing the issue. The full loop, finding the test command, and handling items that resist a test are in **[REFERENCE.md](REFERENCE.md)**.
+Work **one item at a time** — an Acceptance Criterion (fresh build) or a review finding (rework) — through a strict red-green-refactor loop, **naming each test after the Acceptance Criterion / `US#` it drives out** so the test threads back to the requirement. It's like writing the exam question before the answer: the failing test states exactly what "done" means, then you write just enough code to pass it, then tidy up with the test as a safety net. Write the code to the documented standards **and the `.instincts/` rules** as you go — matching them now is what stops `review-pr` from bouncing the PR back. After each item, run the repo's feedback loops (lint, typecheck, test) and commit small, referencing the issue. The full loop, finding the test command, and handling items that resist a test are in **[REFERENCE.md](REFERENCE.md)**.
 
 ## Step 5: When you can't finish — route by label
 
@@ -84,7 +86,7 @@ gh issue comment <id> --body "> **👷 implement-issue-agent**
 
 ## Report
 
-Report: the issue (link), the PR opened or updated (link) and that it carries `state:review-ready` for `review-pr`, the branch, which Acceptance Criteria or review findings are now covered by tests, and any known follow-up. In batch, one line per task — built / reworked / parked (blocked) / parked (needs human).
+Report: the issue (link), the PR opened or updated (link) and that it carries `state:review-ready` for `review-pr`, the branch, which **`US#`** requirements (and review findings) are now covered by tests, and any known follow-up. In batch, one line per task — built / reworked / parked (blocked) / parked (needs human).
 
 ```
 slice-prd ─ type:task + state:buildable

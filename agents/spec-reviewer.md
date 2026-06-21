@@ -27,11 +27,15 @@ PRD, or ADR. You report findings only — you never edit code and never post com
 
 ## What you return (≤400 words)
 
-Three buckets, each finding tied to a **quoted spec line**:
+First, a **requirement-coverage table keyed by `US#`** — one row per user story in the
+spec, each marked **covered / partial / missing** (this is the structured form of "missing
+or partial", and lets review-pr check the Spec axis against IDs, not prose). If the spec's
+stories aren't `US#`-numbered, key the rows by a short quoted requirement instead.
 
-- **(a) Missing or partial** — requirements asked for that the diff doesn't deliver.
+Then two buckets, each finding tied to a **quoted spec line** (or its `US#`):
+
 - **(b) Scope creep** — behaviour the diff adds that the spec never asked for.
 - **(c) Implemented but wrong** — requirements that look done but don't match what
   the spec actually says.
 
-Quote the spec line for each. Ask for findings, not echoed code.
+Ask for findings, not echoed code.

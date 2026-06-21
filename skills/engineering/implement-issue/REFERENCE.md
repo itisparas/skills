@@ -14,7 +14,11 @@ Hold the three commands in memory: **test**, **lint**, **typecheck**. You'll run
 
 ## The loop — one Acceptance Criterion at a time
 
-For each behaviour from the Acceptance Criteria, in order:
+Work the **resolved build map** from `SKILL.md` Step 3 (the `kb-investigator` build-map pass turned
+the issue's component-level Implementation Map into current file:line targets, in order) — but the
+unit of the loop is still one **Acceptance Criterion / `US#`** at a time, test-first. The map tells
+you *where*; the criterion tells you *what done means*. For each behaviour from the Acceptance
+Criteria, in order:
 
 1. **Red.** Write the smallest test that asserts the criterion and *fails for the right reason*. Run it; confirm it fails because the behaviour is missing, not because of a typo or setup error. A test that passes immediately, or fails for the wrong reason, teaches nothing — fix it before moving on.
 2. **Green.** Write the *minimum* code to make that test pass. No extra abstraction, no unrelated changes, nothing the criterion didn't ask for. Run the test; confirm green.

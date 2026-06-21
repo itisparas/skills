@@ -32,9 +32,23 @@ inline just the decision-rich bit and note where it came from.
 - [ ] Project `.instincts/` rules in scope are linked (coding preferences to honour)
 
 ## Acceptance Criteria  (observable behaviour that proves it works)
-- [ ] <user-visible outcome 1 — phrased as what someone can do/see>
-- [ ] <user-visible outcome 2>
-- [ ] <edge case / failure path handled>
+Each criterion **tags the `US#` it proves** and is written test-shaped, mapping straight to
+arrange/act/assert — EARS (`When <trigger>, the system shall <response>`) for system behaviour,
+or `Given … When … Then …` for a user-visible flow (author's choice per criterion, plain English;
+cheat-sheet below). Keep it light — a trivial criterion can stay a plain sentence.
+- [ ] (US1) When <trigger>, the system shall <observable response>
+- [ ] (US1) Given <state>, when <action>, then <observable outcome>
+- [ ] (US2) <edge case / failure path handled>
+
+## Implementation Map  (proposed — refreshed at build, NOT a contract)
+An ordered, **component/seam-level** plan from the Step 2 investigation — *what to touch and in
+what order* — each step tagged with the `US#` it serves. **No file paths or snippets** (they rot
+across the human gate; the only exception is a decision-encoding shape, as in *What to build*).
+`implement-issue` re-resolves these to current file targets at build time, so the map seeds the
+build (the strong model executes it instead of exploring the repo) without binding it.
+- [ ] (US1) <component / seam to change> — <the step, one line>
+- [ ] (US1) <next step, in dependency order>
+- [ ] (US2) <…>
 
 ## Definition of Done  (the bar before merge)
 - [ ] Acceptance criteria all met and demoed
@@ -45,6 +59,18 @@ inline just the decision-rich bit and note where it came from.
 ## Blocked by
 - #<blocker issue>      ← or "None — can start immediately"
 ```
+
+## EARS cheat-sheet (acceptance-criteria shapes — optional, keep it light)
+
+EARS is just four sentence shapes for acceptance criteria. Use whichever fits; don't over-formalise
+a trivial one. Each still tags its `US#`.
+
+- **Ubiquitous** — `The system shall <response>.` (always true)
+- **Event-driven** — `When <trigger>, the system shall <response>.`
+- **State-driven** — `While <state>, the system shall <response>.`
+- **Unwanted behaviour** — `If <condition>, then the system shall <response>.` (errors / failure paths)
+
+For a user-visible flow, `Given <state>, When <action>, Then <outcome>` reads better — author's choice.
 
 ## Parked-proposal comment (Step 4, no human present)
 
@@ -71,9 +97,9 @@ Proposed breakdown shown to the user:
 
 | # | Title | Clear / Needs-a-human | Blocked by | User stories |
 | --- | --- | --- | --- | --- |
-| 1 | Request-reset endpoint + token storage + happy-path test | Clear | None | US-1 |
-| 2 | Reset-link email (provider TBD) | **Needs-a-human** — provider undecided | 1 | US-2 |
-| 3 | Set-new-password page + validation + test | Clear | 1 | US-3 |
+| 1 | Request-reset endpoint + token storage + happy-path test | Clear | None | US1 |
+| 2 | Reset-link email (provider TBD) | **Needs-a-human** — provider undecided | 1 | US2 |
+| 3 | Set-new-password page + validation + test | Clear | 1 | US3 |
 
 The coarseness conversation that sets this:
 
@@ -87,3 +113,17 @@ On publish: #1 and #3 get `type:task` + `state:buildable`; #2 gets `type:task` +
 `state:human-review-needed` with the open question (which email provider?) called out in its
 body. PRD #250 is marked `state:sliced` (off `state:slice-ready`) and stays open as the epic
 with a checklist of the three.
+
+Slice 1's tagged acceptance criteria and its Implementation Map (what lands on the issue body):
+
+```markdown
+## Acceptance Criteria
+- [ ] (US1) When a customer requests a reset for a known email, the system shall store a
+      single-use token valid 15 minutes.
+- [ ] (US1) If the email is unknown, then the system shall respond the same way (no account leak).
+
+## Implementation Map  (proposed — refreshed at build, NOT a contract)
+- [ ] (US1) Add a single-use reset-token store to the auth-session component
+- [ ] (US1) Expose a request-reset endpoint on the public API seam, writing that token
+- [ ] (US1) Cover both paths (known / unknown email) with the repo's existing API test seam
+```

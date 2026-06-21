@@ -65,7 +65,7 @@ Run the deterministic setup for the chosen backend — this builds the *whole* i
 - **Notion** → create one database per pipeline doc-type via the Notion MCP (`notion-create-database`), per [REFERENCE.md](REFERENCE.md#notion).
 - **Hybrid** → run the GitHub script **and** the knowledge half (Notion databases or `scaffold-local.sh`), wiring each to the other.
 
-Then, for **every** backend, create a project-tier `.instincts/` folder so portable coding preferences travel with the repo. You only scaffold the empty folder — the `instincts` skill owns what goes inside it and the always-on apply loop. This is a developer-experience win: agents pick up the team's coding instincts automatically, no re-explaining.
+Then, for **every** backend, create a project-tier `.instincts/` folder so portable coding preferences travel with the repo. You only scaffold the empty folder — the `instincts` skill owns what goes inside it and the always-on apply loop. This is a developer-experience win: agents pick up the team's coding instincts automatically, no re-explaining. On a **greenfield** project (empty folder, no codebase to distil from), **offer** — never auto-run, matching this skill's confirm-before-write gate — to run the `instincts` skill's **"ratify (greenfield)"** path now, establishing founding principles (tech defaults, structure conventions, product principles) before any features. This is the pipeline's "establish principles first" step, delivered as an opt-in offer at bootstrap.
 
 ## Step 5: Wire ownership through AGENTS.md
 
