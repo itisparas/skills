@@ -69,7 +69,7 @@ Then load the **brief** the PRD expands (follow the "Expands #…" cross-link), 
 
 ## Step 2: Investigate the codebase (sub-agent)
 
-Spawn the **`kb-investigator`** agent (read-only, runs on Haiku — `Agent` tool, `subagent_type: kb-investigator`) to map the PRD onto the code, keeping the heavy read out of the main context. Hand it **purpose: slicing**, the PRD's user stories + implementation decisions, and the relevant glossary terms and ADRs. It returns the natural seams, a proposed thin-vertical-slice list with dependency order, and any requirement that is **ambiguous, missing information, or needs a design decision** — ≤500 words, no file:line dumps. *If named subagents aren't supported on this harness, spawn a `general-purpose` sub-agent on a fast model and have it follow `agents/kb-investigator.md`.*
+Spawn the **`kb-investigator`** agent (read-only, runs on Haiku — `Agent` tool, `subagent_type: kb-investigator`) to map the PRD onto the code, keeping the heavy read out of the main context. Hand it **purpose: slicing**, the PRD's user stories + implementation decisions, and the relevant glossary terms and ADRs. It returns the natural seams, a proposed thin-vertical-slice list with dependency order, a per-slice **component-level build map** (ordered steps, no file:line), and any requirement that is **ambiguous, missing information, or needs a design decision** — ≤500 words, no file:line dumps. *If named subagents aren't supported on this harness, spawn a `general-purpose` sub-agent on a fast model and have it follow `agents/kb-investigator.md`.*
 
 Use what it returns to draft the slices (Step 3) and to mark which slices are clear vs ambiguous (Step 5). The presence of **any** ambiguous slice blocks auto-advance (Step 4).
 
@@ -108,7 +108,7 @@ Removing `state:slice-ready` drops it from the batch queue; it returns only when
 
 ## Step 5: Publish the child issues
 
-Publish in **dependency order** (blockers first) so real issue numbers fill each "Blocked by". Each issue body follows the template in [EXAMPLES.md](EXAMPLES.md) — **Parent** (PRD + brief links), **What to build**, **Definition of Ready**, **Acceptance Criteria**, **Definition of Done** (all detailed checklists). Inherit `area:*` / `topic:*` from the PRD.
+Publish in **dependency order** (blockers first) so real issue numbers fill each "Blocked by". Each issue body follows the template in [EXAMPLES.md](EXAMPLES.md) — **Parent** (PRD + brief links), **What to build**, **Definition of Ready**, **Acceptance Criteria** (each tagged with the `US#` it proves, in EARS / Given-When-Then shape), **Implementation Map** (the Step 2 build map — proposed, component-level, `US#`-tagged; seeds the build, refreshed at build time), **Definition of Done** (all detailed checklists). Inherit `area:*` / `topic:*` from the PRD.
 
 ```bash
 # clear slice — buildable, awaiting the human build gate

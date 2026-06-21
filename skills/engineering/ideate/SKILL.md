@@ -101,6 +101,8 @@ Write a **lean** brief — just enough for a human to decide whether to gate it.
 <one or two sentences — what's wrong or missing, and why it matters>
 
 ## Acceptance criteria
+<!-- optional: write test-shaped — "When <trigger>, the system shall <response>" (EARS) or
+"Given … When … Then …". Plain English, keep it light. No US# IDs here — those start at the PRD. -->
 - <observable, checkable outcome>
 - <…>
 

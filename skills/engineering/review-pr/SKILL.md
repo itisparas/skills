@@ -74,7 +74,7 @@ Send a single message with two `Agent` tool calls — `subagent_type: standards-
 
 **`standards-reviewer`** — pass the full diff command + commit list and the standards-source files from step 3 (**including the `.instincts/` rules**). It reports every place the diff violates a documented standard or instinct, citing each, hard-violation vs judgement-call.
 
-**`spec-reviewer`** — pass the diff command + commit list and the spec path/contents. It reports (a) missing/partial requirements, (b) scope creep, (c) implemented-but-wrong, each tied to a quoted spec line. If the spec is missing, skip it and note "no spec available" in the report.
+**`spec-reviewer`** — pass the diff command + commit list and the spec path/contents. It returns a **`US#` requirement-coverage table** (covered / partial / missing — the Spec axis as a checklist against IDs), then (b) scope creep and (c) implemented-but-wrong, each tied to a quoted spec line. If the spec is missing, skip it and note "no spec available" in the report.
 
 ### 5. Align with the user, then post
 
@@ -110,6 +110,12 @@ Unless something was parked as `state:human-review-needed`, the PR is now clean 
 - Merge with the repo's method and delete the branch: `gh pr merge <n> --squash --delete-branch`. If required checks are still running, add `--auto` so it merges the moment they pass — don't drop the duty back on a human.
 - `closes #<issue>` retires the task issue on merge; confirm it closed (`gh pr view <n> --json closingIssuesReferences`) and close it explicitly if it didn't.
 - **Only** when the merge needs something review-pr cannot satisfy — branch protection requiring another human's approval — fall back to `state:merge-ready` and say why in the comment. A pending check is **not** that case; wait it out with `--auto`.
+
+**6c. Reconcile the PRD epic — keep the spec truthful.** After the merge lands, sync the PRD epic that the task traces to (the `Parent: PRD #<prd>` link, already resolved as the spec source in §2). Reuse the `> **🔎 review-pr-agent**` marker and the existing `state:sliced` epic — **no new label**:
+
+- **Tick the merged slice's box** on the PRD epic's slice-prd checklist (the `🔪 slice-prd-agent` comment from slice-prd Step 6) — edit that comment to check `- [x] #<this PR's issue>`.
+- **Record any accepted deviation as-built.** If the §5 interview accepted a departure from a PRD `Implementation Decision` (disposition *"acceptable, note it"*), append a marked note to the PRD body/comment recording what was *actually* built and why — so the durable spec stays honest, not just the review thread.
+- **Close the epic when the last child merges.** If every box on the epic checklist is now ticked (all children merged/closed), close the PRD: `gh issue close <prd> --reason completed` (this drops `state:sliced` with it). In Notion / local KB, mark the PRD done. Otherwise leave it open as the live epic.
 
 ## Why two axes
 

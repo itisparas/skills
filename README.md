@@ -28,7 +28,7 @@ The pipeline skills hand their heavy reads and reviews to **shared sub-agent per
 
 | Agent | Model | Used by | Role |
 | --- | --- | --- | --- |
-| [`kb-investigator`](agents/kb-investigator.md) | Haiku | create-prd, slice-prd, implement-issue | Read-only codebase mapper — feasibility / slicing seams / build map. Returns a short decisions-and-prose map (≤500 words, no file:line dumps) and a Low/Med/High feasibility rating. |
+| [`kb-investigator`](agents/kb-investigator.md) | Haiku | create-prd, slice-prd, implement-issue | Read-only codebase mapper — feasibility / slicing seams / build map. Returns a short decisions-and-prose map (≤500 words) + a Low/Med/High feasibility rating. Path-free for the durable purposes (feasibility/slicing); the **build map** purpose may return file:line targets (ephemeral, consumed in-session) so the implementer doesn't re-explore. |
 | [`standards-reviewer`](agents/standards-reviewer.md) | Sonnet | review-pr | Read-only Standards axis — checks the diff against documented standards **and the project `.instincts/` rules**. ≤400 words. |
 | [`spec-reviewer`](agents/spec-reviewer.md) | Sonnet | review-pr | Read-only Spec axis — checks the diff against the originating issue/PRD/ADR. ≤400 words. |
 
@@ -227,6 +227,8 @@ When [`write-a-skill`](skills/productivity/write-a-skill/SKILL.md) authors a new
 - **Model tiering** — the mechanical reads and reviews run as sub-agents on **cheap, fast models** (the [`agents/`](agents/) personas: `kb-investigator` on Haiku, the reviewers on Sonnet); **anything that writes code stays on the strong model** (the `implement-issue` build, review-pr's inline fixer). This is the main cost lever for running the pipeline.
 - **Instincts in the loop** — the project-tier `.instincts/` rules (owned by the `instincts` skill) are a **standards source**: `implement-issue` builds against them and `review-pr` checks against them, so build and review share one rubric and the code is right first time — fewer rework loops.
 - **Plain language** — user-facing questions and reports assume a non-technical reader: everyday words, quick analogies, and concrete live examples over abstractions.
+- **Requirement traceability (`US#`)** — the PRD's User Stories are the origin of truth: each gets a stable `US#` id, **never renumbered**, that threads downstream — `slice-prd` tags every Acceptance Criterion and Implementation-Map step with it, `implement-issue` names tests after it, and `spec-reviewer` returns a `US#` coverage table. Acceptance criteria are written test-shaped (EARS — `When … the system shall …` — or `Given/When/Then`), kept light and optional for trivial cases. This is a *convention*, not a new label or marker — the control-plane tables are unchanged.
+- **Build maps as a token lever** — `slice-prd` writes a durable, path-free, `US#`-tagged **Implementation Map** onto each child issue (cheap model, before the human gate); at build time `implement-issue` has `kb-investigator` resolve it to current file:line targets, so the strong model executes a tight map instead of re-exploring the repo. The heavy read stays cheap; the expensive build session stays lean.
 
 ## Attribution
 

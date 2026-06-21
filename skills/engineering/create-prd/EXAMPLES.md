@@ -15,8 +15,10 @@ file paths and snippets go stale.
 
 ## User Stories
 <a long, numbered list covering all aspects of the feature>
-1. As a <actor>, I want <feature>, so that <benefit>
-2. …
+Each story carries a stable ID (US1, US2…), **never renumbered once published** — every
+downstream task, build-map step, test, and review finding references it by that ID.
+1. **US1** — As a <actor>, I want <feature>, so that <benefit>
+2. **US2** — …
 
 ## Implementation Decisions
 - <modules to build/modify and their interfaces — described, not pathed>

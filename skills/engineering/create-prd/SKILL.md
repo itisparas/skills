@@ -109,7 +109,7 @@ The brief is **retired** once the PRD exists — see Step 6.
 
 ## Step 5: Write the PRD
 
-Write for a non-technical stakeholder first, an engineer second; use the glossary's terms. Keep it about **decisions**, not code — file paths and snippets go stale. The full PRD template (Problem, Solution, User Stories, Implementation/Testing Decisions, Scope, Risks) is in **[EXAMPLES.md](EXAMPLES.md)**.
+Write for a non-technical stakeholder first, an engineer second; use the glossary's terms. Keep it about **decisions**, not code — file paths and snippets go stale. The full PRD template (Problem, Solution, User Stories, Implementation/Testing Decisions, Scope, Risks) is in **[EXAMPLES.md](EXAMPLES.md)** — each User Story carries a stable `US#` ID, **never renumbered once published**; downstream tasks, build maps, tests, and reviews reference it.
 
 Post or update the PRD in the Step 4 destination. If a relevant PRD already exists, refine it rather than duplicating. **If the brief carried `state:auto-ok` and the work was low-risk** (Step 3 auto-advance), apply `state:auto-ok` to the new PRD so `slice-prd` can continue the chain — `gh issue edit <prd> --add-label "state:auto-ok"`. Otherwise leave it off; a human gates with `state:slice-ready` as normal.
 
