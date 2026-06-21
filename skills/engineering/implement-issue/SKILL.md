@@ -29,7 +29,7 @@ The **implementer.** It picks up a task a human gated for building and drives it
 - **Search narrow.** Use `ast-grep` (`sg`) for code, never `grep`; keyword search only for prose. Push a big codebase read into the **`kb-investigator`** agent (read-only, Haiku — purpose: build map) that returns a short map. **Tiering:** reads/reviews go cheap; **the build itself writes code, so it stays on the strong (Opus) model** — don't downgrade the implementer.
 - **Context budget (≤150k, soft).** Hold summaries, not raw dumps. If the window approaches ~150k tokens during a long build, off-load the next codebase read to a fresh `kb-investigator` sub-agent rather than growing context.
 - **Stable prefix.** Keep loaded context fixed across the red-green-refactor loop so prompt caching stays warm.
-- **Terse internal, plain to the user.** Scratch reasoning can be caveman-terse (see `caveman`); the PR body, comments, and report stay plain and complete.
+- **Be concise, sacrifice grammar for the sake of concision.** Internally and in-session, caveman-terse (see `caveman`); the PR body, comments, and report still stay plain and complete.
 
 ## Step 1: Resolve the input — fresh build or rework?
 

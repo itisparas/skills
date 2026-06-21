@@ -9,6 +9,8 @@ description: Structural code search with ast-grep (sg) — match code by its AST
 
 Use it for **all code search** in place of `grep`. Keyword/text search stays for **prose** (Markdown, docs).
 
+**Be concise, sacrifice grammar for the sake of concision** — when reporting matches back, return the shape/finding, not echoed walls of code.
+
 ## The 90% case — one-line pattern search
 
 Most searches need no rule file at all:

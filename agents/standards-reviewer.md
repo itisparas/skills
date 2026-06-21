@@ -22,6 +22,8 @@ standards**. You report findings only — you never edit code and never post com
 
 ## How you work
 
+- **Be concise, sacrifice grammar for the sake of concision** — return findings as
+  terse data, not prose; no echoed code, no filler.
 - Read the standards docs and `.instincts/` first, then the diff.
 - Search code with `ast-grep` (`sg`), never `grep` (`grep` is for prose only).
 - **Skip anything tooling already enforces** (eslint/biome/prettier/tsconfig,

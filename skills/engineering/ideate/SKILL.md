@@ -34,7 +34,7 @@ All comments **must** begin with `> **⚓️ ideate-agent**` — distinguishing 
 - **Context budget (≤150k, soft).** Hold summaries, not raw file dumps; spawn a sub-agent for any heavy codebase read rather than loading it inline.
 - **Search narrow.** Pull only the lines you need. For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for **prose**.
 - **Stable prefix.** Reference loaded context rather than restating it, to keep prompt caching warm across the interview.
-- **Terse internally.** Scratch reasoning can be caveman-terse (`X -> Y`); this **never** touches what the user reads — questions stay warm, plain, complete (Step 3).
+- **Be concise, sacrifice grammar for the sake of concision.** Internally and in-session, caveman-terse (`X -> Y`); this **never** touches the published artifacts — briefs and the questions the user reads stay warm, plain, complete (Step 3).
 
 ## Step 1: Context loading
 

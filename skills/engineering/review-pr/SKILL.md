@@ -33,7 +33,7 @@ claude mcp add --transport http notion https://mcp.notion.com/mcp   # then run /
 - **Context budget (≤150k, soft).** Hold the sub-agents' short reports + your interview notes — never the diff itself. If a long fix loop grows the window toward ~150k, re-spawn a fresh review sub-agent over the new diff rather than carrying it inline.
 - **Search narrow.** Gather the standards/spec file list with targeted lookups, not by reading every candidate. For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for prose.
 - **Lean sub-agents.** The 400-word caps below are deliberate — keep them. Ask for findings, not echoed code.
-- **Terse internally, plain to the user.** Scratch notes can be caveman-terse (`X -> Y`); the final report and any PR comment stay plain enough for a non-technical stakeholder.
+- **Be concise, sacrifice grammar for the sake of concision.** Internally and in-session, caveman-terse (`X -> Y`); the final report and any PR comment still stay plain enough for a non-technical stakeholder.
 
 ## Process
 

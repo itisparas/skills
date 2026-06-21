@@ -39,7 +39,7 @@ All comments and PRD bodies **must** begin with `> **📐 create-prd-agent**` �
 - **Context budget (≤150k, soft).** Hold **summaries only** — never the codebase, never raw file dumps. If the window approaches ~150k tokens, spawn a fresh sub-agent rather than grow context. In batch, discard one brief's working notes before starting the next.
 - **Load once.** Read the brief, glossary (`CONTEXT.md`), and relevant ADRs once in Step 1; work from a short summary.
 - **Search narrow.** For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for **prose**.
-- **Terse internally, plain to the user.** Scratch reasoning can be caveman-terse (`X -> Y`; see `caveman`). Everything the user reads — questions and the PRD — stays plain and example-driven.
+- **Be concise, sacrifice grammar for the sake of concision.** Internally and in-session, caveman-terse (`X -> Y`; see `caveman`). Everything the user *reads as an artifact* — questions and the PRD — still stays plain and example-driven.
 
 ## Invocation modes
 

@@ -20,7 +20,7 @@ It pairs with `knowledge-base`: that skill scaffolds the `.instincts/` folder an
 - **Load once, open little.** Read only the **index block**, then open the one or two instinct files actually relevant — never the whole folder. Progressive disclosure is the whole design: the index travels in `AGENTS.md`, the rules don't.
 - **ast-grep for code.** When distilling instincts from a codebase, search structurally with `ast-grep` (`sg`), not `grep` (common patterns in the `ast-grep` skill's REFERENCE.md). Keyword search is for prose only.
 - **Deterministic work in `scripts/`.** Index regeneration is scripted (`scripts/index.sh`) — run it, don't hand-write the block.
-- **Terse internally, plain to the user.** Scratch notes may be caveman-terse; everything the user reads stays plain and example-grounded.
+- **Be concise, sacrifice grammar for the sake of concision.** Internally and in-session, caveman-terse; everything the user reads as an artifact stays plain and example-grounded.
 
 ## The format
 

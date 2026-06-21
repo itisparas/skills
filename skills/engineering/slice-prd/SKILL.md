@@ -42,7 +42,7 @@ All comments and child-issue bodies **must** begin with `> **🔪 slice-prd-agen
 - **Context budget (≤150k, soft).** Hold **summaries only** — never the codebase. If the window approaches ~150k tokens, spawn a fresh sub-agent rather than grow context. In batch, discard one PRD's working notes before the next.
 - **Load once.** Read the PRD, its brief, the glossary (`CONTEXT.md`), and relevant ADRs once in Step 1; work from a short summary.
 - **Search narrow.** For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for **prose**.
-- **Terse internally, plain to the user.** Scratch reasoning can be caveman-terse (`X -> Y`; see `caveman`). Everything the user reads — the interview and the breakdown — stays plain and example-driven.
+- **Be concise, sacrifice grammar for the sake of concision.** Internally and in-session, caveman-terse (`X -> Y`; see `caveman`). Everything the user *reads as an artifact* — the interview and the breakdown — still stays plain and example-driven.
 
 ## Invocation modes
 

@@ -25,7 +25,7 @@ claude mcp add --transport http notion https://mcp.notion.com/mcp   # then run /
 - **Load once.** Read `ORG_KB`, the glossary, and the skills inventory once in Step 1; work from a short in-memory summary.
 - **Search narrow.** Prefer targeted lookups over whole files. For **code** use `ast-grep` (`sg`), never `grep` (common patterns in the `ast-grep` skill's REFERENCE.md); keyword search is only for **prose**.
 - **Stable prefix.** Reference loaded context rather than restating it, to keep prompt caching warm across the interview.
-- **Terse internally, plain to the user.** Scratch notes can be caveman-terse (`X -> Y`; see `caveman`); what the user reads stays warm and complete (Step 4).
+- **Be concise, sacrifice grammar for the sake of concision.** Internally and in-session, caveman-terse (`X -> Y`; see `caveman`); what the user reads as an artifact stays warm and complete (Step 4).
 
 ## The house contract
 
